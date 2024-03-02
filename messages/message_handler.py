@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 import pytz
 
+#accessing modules requires '.' prefix else not required for package. to actually understand it: https://stackoverflow.com/q/16981921
 from .commands import process_command
 from .chats import process_chat
 from databases.messages.messages_main import log_message
