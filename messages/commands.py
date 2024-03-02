@@ -1,7 +1,7 @@
 async def process_command(message, prefix):
     text = message.content[len(prefix):].split()
     command = text[0]
-    optionals = text[1:]
+    optionals = text[1:] if len(text) > 1 else []
     print(command)
 
     if command == "ping":
