@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from messages.message_handler import process_messages
 
 
-with open("aBotHasNoName\config.json", "r") as json_file:
+with open("config.json", "r") as json_file:
     config = json.load(json_file)
 
 intents = discord.Intents().all() #permissions we are allowing for our bot to access (intents determine which events discord will send to your app)
@@ -32,6 +32,6 @@ async def on_message(message):
 load_dotenv()
 token = os.getenv('TOKEN')
 if token is None:
-    print("TOKEN environment variable not set. Using default token.")
-    token = "MTIxMDU3MzA0ODE2ODcxNDI5MA.GROhsj.RgzzCtN9o7gBO3Zi9tegIXraCu1_gMvaU1wVAQ"
-client.run(token) #running the bot by supplying our token which is like the password for our bot
+    print("TOKEN environment variable not set. Exiting...")
+else:
+    client.run(token) #running the bot by supplying our token which is like the password for our bot
