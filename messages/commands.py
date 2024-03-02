@@ -4,6 +4,9 @@ async def process_command(message, prefix):
     optionals = text[1:] if len(text) > 1 else []
     print(command)
 
+    if command == "" or not command[0].isalnum():
+        return
+
     if command == "ping":
         await message.channel.send("pong")
     elif command == "hello":
