@@ -1,37 +1,34 @@
 # @client.event - to register an event
 # async await - https://www.reddit.com/r/learnprogramming/comments/tya94m/comment/i3qy6ig/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
 import discord
+from discord.ext import commands
 import os
 import json
 from dotenv import load_dotenv
-from messages.message_handler import process_messages
+import logging
 
 
 with open("config.json", "r") as json_file:
     config = json.load(json_file)
 
-intents = discord.Intents().all() #permissions we are allowing for our bot to access (intents determine which events discord will send to your app)
-client = discord.Client(intents=intents) #our bot, the connection to discord
-
-prefix = config["prefix"]
-guildId = 950272762340061185 #936102218434769008
+description = '''A bot that has no name'''
+intents = discord.Intents().all() #intent basically allows a bot to subscribe to specific buckets of events
+bot = commands.Bot(prefix='.', description=description, intents=intents) #our bot, the connection to discord (Client is a class, while client is an instance of that class)
 
 # event that is run when our bot is online and ready to start being used
-@client.event
+@bot.event
 async def on_ready(): 
-    print('We have logged in as {0.user}'.format(client))
-    guild = client.get_guild(guildId)
+    print('We have logged in as {0.user}'.format(bot))
 
-@client.event
+@bot.event
 async def on_message(message):
-    if message.author == client.user or message.author.bot:
+    if message.author == bot.user or message.author.bot:
         return
-    
-    await process_messages(message, prefix)
 
 load_dotenv()
 token = os.getenv('TOKEN')
 if token is None:
     print("TOKEN environment variable not set. Exiting...")
 else:
-    client.run(token) #running the bot by supplying our token which is like the password for our bot
+    handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
+    bot.run(token, log_handler=handler, log_level=logging.DEBUG) #running the bot by supplying our token which is like the password for our bot
