@@ -1,4 +1,4 @@
 {
-    "prefix": ".",
-    "invite_link": "https://discord.com/oauth2/authorize?client_id=1210573048168714290&permissions=8&scope=bot"
+    "invite_link": "https://discord.com/oauth2/authorize?client_id=1210573048168714290&permissions=8&scope=bot",
+    "default_prefix": "."
 }

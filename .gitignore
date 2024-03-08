@@ -2,3 +2,6 @@ roadmap/features.txt
 .env
 test.py
 messages/__pycache__/commands.cpython-311.pyc
+discord.log
+test/__pycache__/test.cpython-311.pyc
+test/test2.py
