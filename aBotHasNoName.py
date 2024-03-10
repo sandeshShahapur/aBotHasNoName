@@ -68,10 +68,14 @@ class aBotHasNoName(commands.Bot):
         await super().on_disconnect()
         print(f'{self.user} has disconnected from Discord!')
 
+    async def on_resumed(self) -> None:
+        await super().on_resumed()
+        print(f'{self.user} has resumed connection in Discord!')
+
 
     async def close(self) -> None:
         await super().close()
-        print(f'{self.user} has logged out of Discord!')
+        print(f'{self.user} has logged out of and exited Discord!')
         await self.db_pool.close()
 
         
