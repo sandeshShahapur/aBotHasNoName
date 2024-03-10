@@ -57,19 +57,15 @@ class aBotHasNoName(commands.Bot):
         print(f'{self.user} has setupped!')
 
     async def on_connect(self) -> None:
-        await super().on_connect()
         print(f'{self.user} has connected to Discord!')
 
     async def on_ready(self) -> None:
-        await super().on_ready()
         print(f'{self.user} is ready!')
 
     async def on_disconnect(self) -> None:
-        await super().on_disconnect()
         print(f'{self.user} has disconnected from Discord!')
 
     async def on_resumed(self) -> None:
-        await super().on_resumed()
         print(f'{self.user} has resumed connection in Discord!')
 
 
