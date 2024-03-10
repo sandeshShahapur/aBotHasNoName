@@ -7,3 +7,9 @@ test/__pycache__/test.cpython-311.pyc
 test/test2.py
 __pycache__/aBotHasNoName.cpython-311.pyc
 __pycache__/__init__.cpython-311.pyc
+Cogs/__pycache__/Stats.cpython-311.pyc
+Cogs/__pycache__/Messages.cpython-311.pyc
+Cogs/__pycache__/__init__.cpython-311.pyc
+databases/__pycache__/events.cpython-311.pyc
+utilities/__pycache__/datetime.cpython-311.pyc
+utilities/__pycache__/__init__.cpython-311.pyc

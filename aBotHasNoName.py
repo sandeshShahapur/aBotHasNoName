@@ -24,6 +24,8 @@ class aBotHasNoName(commands.Bot):
 
 
     async def setup_hook(self) -> None:
+        print(f'{self.user} has logged in!')
+
         logger = logging.getLogger('discord')
         logger.setLevel(logging.INFO)
 
@@ -45,11 +47,27 @@ class aBotHasNoName(commands.Bot):
         for extension in self.initial_extensions:
             await self.load_extension(extension)
 
-    async def on_ready(self) -> None:
+        loaded_cogs = self.cogs
+        # Printing the list of loaded cogs
+        print("Loaded cogs:")
+        for cog_name, cog_object in loaded_cogs.items():
+            print(f"- {cog_name}")
+
+        print(f'{self.user} has setupped!')
+
+    async def on_connect(self) -> None:
         print(f'{self.user} has connected to Discord!')
+
+    async def on_ready(self) -> None:
+        print(f'{self.user} is ready!')
+
+    async def on_disconnect(self) -> None:
+        print(f'{self.user} has disconnected from Discord!')
+
 
     async def close(self) -> None:
         await super().close()
+        print(f'{self.user} has logged out of Discord!')
         await self.db_pool.close()
 
         
@@ -59,7 +77,7 @@ def main() -> None:
         default_prefix = config['default_prefix']
 
     intents = discord.Intents.all() #intent basically allows a bot to subscribe to specific buckets of events
-    initial_extensions = []
+    initial_extensions = ['Cogs.Stats', 'Cogs.Messages']
     description = '''A bot that has no name'''
 
     bot = aBotHasNoName(
