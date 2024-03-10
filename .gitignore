@@ -15,3 +15,6 @@ utilities/__pycache__/datetime.cpython-311.pyc
 utilities/__pycache__/__init__.cpython-311.pyc
 main.env
 development.env
+utils/__pycache__/embeds.cpython-311.pyc
+utils/__pycache__/datetime.cpython-311.pyc
+utils/__pycache__/__init__.cpython-311.pyc
