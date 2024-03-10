@@ -2,6 +2,7 @@ import asyncio
 import discord
 from discord.ext import commands
 from datetime import datetime
+from databases.events import get_top_users, get_top_channels
 
 
 class Stats(commands.Cog):
@@ -11,15 +12,8 @@ class Stats(commands.Cog):
 
     @commands.command()
     async def stats(self, ctx):
-        pool = self.bot.db_pool
-
-        async with pool.acquire() as connection:
-            async with connection.transaction():
-                query = f"SELECT user_id, COUNT(*) as message_count FROM messages_main where server_id = {str(ctx.guild.id)} GROUP BY user_id ORDER BY message_count DESC LIMIT 3"
-                top_users = await connection.fetch(query)
-
-                query = f"SELECT channel_id, COUNT(*) as message_count FROM messages_main where server_id = {str(ctx.guild.id)} GROUP BY channel_id ORDER BY message_count DESC LIMIT 3"
-                top_channels = await connection.fetch(query)
+        top_users = await get_top_users(self.bot.db_pool, ctx.guild.id)
+        top_channels = await get_top_channels(self.bot.db_pool, ctx.guild.id)
 
         message = "**The top 3 users are:**\n"
         for i, user in enumerate(top_users):
