@@ -13,3 +13,5 @@ Cogs/__pycache__/__init__.cpython-311.pyc
 databases/__pycache__/events.cpython-311.pyc
 utilities/__pycache__/datetime.cpython-311.pyc
 utilities/__pycache__/__init__.cpython-311.pyc
+main.env
+development.env

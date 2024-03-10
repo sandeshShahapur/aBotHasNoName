@@ -11,7 +11,7 @@ from typing import List, Optional
 
 import asyncpg
 
-load_dotenv()
+load_dotenv("main.env")
 class aBotHasNoName(commands.Bot):
     def __init__(
         self,
