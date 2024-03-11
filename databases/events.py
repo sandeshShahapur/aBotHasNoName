@@ -6,7 +6,7 @@ async def log_message(db_pool, message_id, server_id, user_id, channel_id, date,
     async with db_pool.acquire() as connection:
         async with connection.transaction():
             await connection.execute(
-                f"INSERT INTO messages_main (message_id, server_id, user_id, channel_id, date, time) VALUES ($1, $2, $3, $4, $5, $6)",
+                f"INSERT INTO messages_main (message_id, server_id, user_id, channel_id, date, time) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (message_id) DO NOTHING",
                 message_id, server_id, user_id, channel_id, date, time
             )
             #todo add logging to file
@@ -35,7 +35,7 @@ async def bump(db_pool, server_id, user_id):
             if not count:
                 count = 1
                 await connection.execute(
-                    f"INSERT INTO bumps (server_id, user_id, count) VALUES ($1, $2, $3)",
+                    f"INSERT INTO bumps (server_id, user_id, count) VALUES ($1, $2, $3) ON CONFLICT (server_id, user_id) DO NOTHING",
                     server_id, user_id, count
                 )
             else:
