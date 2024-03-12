@@ -9,7 +9,7 @@ class Stats(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-
+    # .display the top 3 users and channels
     @commands.command()
     async def stats(self, ctx):
         top_users = await get_top_users(self.bot.db_pool, ctx.guild.id)
