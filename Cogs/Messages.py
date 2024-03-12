@@ -15,7 +15,7 @@ class Messages(commands.Cog):
         if message.author == self.bot.user:
             return
 
-        """log message"""
+        # .log message snowflakes
         if not message.author.bot:
             message_id = message.id
             server_id = message.guild.id
@@ -26,7 +26,7 @@ class Messages(commands.Cog):
             time = datetime.time()
             await log_message(self.bot.db_pool, message_id, server_id, user_id, channel_id, date, time)
 
-        """"bump reminder"""
+        # .bump reminder
         disboard = 302050872383242240
         if message.embeds and message.author.id == disboard and message.embeds[0].description.startswith('Bump done!'):
             count = await bump(self.bot.db_pool, message.guild.id, message.interaction.user.id)

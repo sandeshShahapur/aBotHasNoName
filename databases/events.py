@@ -3,6 +3,66 @@ import json
 
 log = logging.getLogger('discord')
 
+async def set_server(db_pool, server_id):
+    async with db_pool.acquire() as connection:
+        async with connection.transaction():
+            await connection.execute(
+                f"INSERT INTO servers (id) VALUES ($1) ON CONFLICT (id) DO NOTHING",
+                server_id
+            )
+
+async def set_user(db_pool, user_id):
+    async with db_pool.acquire() as connection:
+        async with connection.transaction():
+            await connection.execute(
+                f"INSERT INTO users (id) VALUES ($1) ON CONFLICT (id) DO NOTHING",
+                user_id
+            )
+
+async def set_server_user(db_pool, server_id, user_id):
+    async with db_pool.acquire() as connection:
+        async with connection.transaction():
+            await connection.execute(
+                f"INSERT INTO server_users (server_id, user_id) VALUES ($1, $2) ON CONFLICT (server_id, user_id) DO NOTHING",
+                server_id, user_id
+            )
+
+async def get_server_user(db_pool, server_id, user_id):
+    async with db_pool.acquire() as connection:
+        async with connection.transaction():
+            return await connection.fetchval(
+                f"SELECT server_user_id FROM server_users where server_id = {server_id} AND user_id = {user_id}"
+            )
+
+async def set_server_user_role(db_pool, server_user_id, role_id):
+    async with db_pool.acquire() as connection:
+        async with connection.transaction():
+            await connection.execute(
+                f"INSERT INTO server_user_roles (server_user_id, role_id) VALUES ($1, $2) ON CONFLICT (server_user_id, role_id) DO NOTHING",
+                server_user_id, role_id
+            )
+
+async def delete_user_role(db_pool, server_user_id, role_id):
+    async with db_pool.acquire() as connection:
+        async with connection.transaction():
+            await connection.execute(
+                f"DELETE FROM server_user_roles WHERE server_user_id = {server_user_id} AND role_id = {role_id}"
+            )
+
+async def get_server_user_roles(db_pool, server_user_id):
+    async with db_pool.acquire() as connection:
+        async with connection.transaction():
+            return await connection.fetch(
+                f"SELECT role_id FROM server_user_roles where server_user_id = {server_user_id}"
+            )
+        
+async def delete_role(db_pool, role_id):
+    async with db_pool.acquire() as connection:
+        async with connection.transaction():
+            await connection.execute(
+                f"DELETE FROM server_user_roles WHERE role_id = {role_id}"
+            )
+
 async def log_message(db_pool, message_id, server_id, user_id, channel_id, date, time):
     async with db_pool.acquire() as connection:
         async with connection.transaction():

@@ -12,6 +12,7 @@ class Configs(commands.Cog):
     @commands.is_owner()
     @commands.group()
     async def config(self, ctx):
+        # .display the current server configurations
         if ctx.invoked_subcommand is None:
             prefix = await get_prefix(self.bot, ctx.message)
             role = await get_default_role(self.bot.db_pool, ctx.guild)
