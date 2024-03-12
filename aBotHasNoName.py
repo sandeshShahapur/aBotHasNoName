@@ -107,9 +107,10 @@ class aBotHasNoName(commands.Bot):
         rejoined = await get_server_user(self.db_pool, member.guild.id, member.id)
         if rejoined:
             guild_roles = member.guild.roles
-            previous_member_roles_id = get_server_user_roles(self.db_pool, rejoined)
+            previous_member_roles_record = await get_server_user_roles(self.db_pool, rejoined)
+            previous_member_roles_id = [record['role_id'] for record in previous_member_roles_record]
             previous_member_roles = [role for role in guild_roles if role.id in previous_member_roles_id]
-            member.add_roles(*previous_member_roles, atomic=False)
+            await member.add_roles(*previous_member_roles, atomic=False)
         else:
             await set_server_user(self.db_pool, member.guild.id, member.id)
 
@@ -134,7 +135,7 @@ class aBotHasNoName(commands.Bot):
             await set_server_user_role(self.db_pool, server_user, role.id)
 
     async def on_guild_role_delete(self, role: discord.Role) -> None:
-        await delete_role(self.db_pool, role.guild.id, role.id)
+        await delete_role(self.db_pool, role.id)
 
     async def close(self) -> None:
         await super().close()
