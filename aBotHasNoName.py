@@ -85,10 +85,10 @@ def main() -> None:
     description = '''A bot that has no name'''
 
     bot = aBotHasNoName(
+        initial_extensions=initial_extensions,
+        command_prefix=get_prefix,
         intents=intents,
         description=description,
-        command_prefix=get_prefix,
-        initial_extensions=initial_extensions, 
         owner_id=owner_id
     ) 
     bot.run(os.getenv('TOKEN')) #run bot
