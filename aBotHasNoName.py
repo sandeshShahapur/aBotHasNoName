@@ -8,6 +8,7 @@ import json
 from dotenv import load_dotenv
 import logging, logging.handlers
 from typing import List, Optional
+from databases.events import get_prefix
 
 import asyncpg
 
@@ -46,13 +47,12 @@ class aBotHasNoName(commands.Bot):
         self.db_pool = db_pool
 
         for extension in self.initial_extensions:
-            await self.load_extension(extension)
+            try:
+                await self.load_extension(extension)
+                print(f"Loaded extension: {extension}")
+            except Exception as e:
+                print(f"Failed to load extension {extension}: {e}")
 
-        loaded_cogs = self.cogs
-        # Printing the list of loaded cogs
-        print("Loaded cogs:")
-        for cog_name, cog_object in loaded_cogs.items():
-            print(f"- {cog_name}")
 
         print(f'{self.user} has setupped!')
 
@@ -78,17 +78,18 @@ class aBotHasNoName(commands.Bot):
 def main() -> None:
     with open('config.json', 'r') as f:
         config = json.load(f)
-        default_prefix = config['default_prefix']
+        owner_id = config['owner_id']
 
     intents = discord.Intents.all() #intent basically allows a bot to subscribe to specific buckets of events
-    initial_extensions = ['Cogs.Stats', 'Cogs.Messages']
+    initial_extensions = ['Cogs.Stats', 'Cogs.Messages', 'Cogs.Configs']
     description = '''A bot that has no name'''
 
     bot = aBotHasNoName(
         intents=intents,
         description=description,
-        command_prefix=default_prefix,
-        initial_extensions=initial_extensions
+        command_prefix=get_prefix,
+        initial_extensions=initial_extensions, 
+        owner_id=owner_id
     ) 
     bot.run(os.getenv('TOKEN')) #run bot
 
