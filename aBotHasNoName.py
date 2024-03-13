@@ -8,7 +8,7 @@ import json
 from dotenv import load_dotenv
 import logging, logging.handlers
 from typing import List, Optional
-from databases.events import (
+from data.databases.events import (
                                 get_prefix,
                                 set_server,
                                 set_user,
@@ -149,7 +149,7 @@ def main() -> None:
         owner_id = config['owner_id']
 
     intents = discord.Intents.all() #intent basically allows a bot to subscribe to specific buckets of events
-    initial_extensions = ['Cogs.Stats', 'Cogs.Messages', 'Cogs.Configs']
+    initial_extensions = ['Cogs.Stats', 'Cogs.Messages', 'Cogs.Configs', 'Cogs.Admin']
     description = '''A bot that has no name'''
 
     bot = aBotHasNoName(
