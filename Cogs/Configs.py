@@ -1,7 +1,7 @@
 import discord
 import asyncio
 from discord.ext import commands
-from databases.events import set_prefix, get_prefix, set_default_role, get_default_role
+from data.databases.events import set_prefix, get_prefix, set_default_role, get_default_role
 from typing import Union
 
 class Configs(commands.Cog):

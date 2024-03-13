@@ -1,9 +1,9 @@
 import discord
 import asyncio
 from discord.ext import commands
-from databases.events import log_message
+from data.databases.events import log_message
 from utils.datetime import convert_utc_to_ist
-from databases.events import bump
+from data.databases.events import bump
 from utils.embeds import create_embed
 
 class Messages(commands.Cog):

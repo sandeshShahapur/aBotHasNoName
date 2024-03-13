@@ -8,7 +8,7 @@ import json
 from dotenv import load_dotenv
 import logging, logging.handlers
 from typing import List, Optional
-from databases.events import (
+from data.databases.events import (
                                 get_prefix,
                                 set_server,
                                 set_user,
