@@ -1,0 +1,184 @@
+{
+  "targets": [955025359840116776],
+  "ld_permissions": [
+    "send_messages",
+    "add_reactions",
+    "create_public_threads",
+    "create_private_threads",
+    "send_messages_in_threads",
+    "use_application_commands",
+    "connect"
+  ],
+  "channels": [
+    {
+      "channel_id": 936102218900332575,
+      "targets": [
+        {
+          "target_id": 955025359840116776,
+          "permissions": [
+            "send_messages",
+            "add_reactions",
+            "create_public_threads",
+            "create_private_threads",
+            "send_messages_in_threads",
+            "use_application_commands",
+            "connect"
+          ]
+        }
+      ]
+    },
+    {
+      "channel_id": 1216612550427414619,
+      "targets": [
+        {
+          "target_id": 955025359840116776,
+          "permissions": [
+            "send_messages",
+            "add_reactions",
+            "create_public_threads",
+            "create_private_threads",
+            "send_messages_in_threads",
+            "use_application_commands",
+            "connect"
+          ]
+        }
+      ]
+    },
+    {
+      "channel_id": 1216612577639927881,
+      "targets": [
+        {
+          "target_id": 955025359840116776,
+          "permissions": [
+            "send_messages",
+            "add_reactions",
+            "create_public_threads",
+            "create_private_threads",
+            "send_messages_in_threads",
+            "use_application_commands",
+            "connect"
+          ]
+        }
+      ]
+    },
+    {
+      "channel_id": 1216612603548270744,
+      "targets": [
+        {
+          "target_id": 955025359840116776,
+          "permissions": [
+            "send_messages",
+            "add_reactions",
+            "create_public_threads",
+            "create_private_threads",
+            "send_messages_in_threads",
+            "use_application_commands",
+            "connect"
+          ]
+        }
+      ]
+    },
+    {
+      "channel_id": 1216612687207858196,
+      "targets": [
+        {
+          "target_id": 955025359840116776,
+          "permissions": [
+            "send_messages",
+            "add_reactions",
+            "create_public_threads",
+            "create_private_threads",
+            "send_messages_in_threads",
+            "use_application_commands",
+            "connect"
+          ]
+        }
+      ]
+    },
+    {
+      "channel_id": 1217226564895248445,
+      "targets": [
+        {
+          "target_id": 955025359840116776,
+          "permissions": [
+            "send_messages",
+            "add_reactions",
+            "create_public_threads",
+            "create_private_threads",
+            "send_messages_in_threads",
+            "use_application_commands",
+            "connect"
+          ]
+        }
+      ]
+    },
+    {
+      "channel_id": 1217226590459527260,
+      "targets": [
+        {
+          "target_id": 955025359840116776,
+          "permissions": [
+            "send_messages",
+            "add_reactions",
+            "create_public_threads",
+            "create_private_threads",
+            "send_messages_in_threads",
+            "use_application_commands",
+            "connect"
+          ]
+        }
+      ]
+    },
+    {
+      "channel_id": 1217226613746307242,
+      "targets": [
+        {
+          "target_id": 955025359840116776,
+          "permissions": [
+            "send_messages",
+            "add_reactions",
+            "create_public_threads",
+            "create_private_threads",
+            "send_messages_in_threads",
+            "use_application_commands",
+            "connect"
+          ]
+        }
+      ]
+    },
+    {
+      "channel_id": 936102218900332576,
+      "targets": [
+        {
+          "target_id": 955025359840116776,
+          "permissions": [
+            "send_messages",
+            "add_reactions",
+            "create_public_threads",
+            "create_private_threads",
+            "send_messages_in_threads",
+            "use_application_commands",
+            "connect"
+          ]
+        }
+      ]
+    },
+    {
+      "channel_id": 1216612654559268864,
+      "targets": [
+        {
+          "target_id": 955025359840116776,
+          "permissions": [
+            "send_messages",
+            "add_reactions",
+            "create_public_threads",
+            "create_private_threads",
+            "send_messages_in_threads",
+            "use_application_commands",
+            "connect"
+          ]
+        }
+      ]
+    }
+  ]
+}
