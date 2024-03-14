@@ -90,20 +90,20 @@ async def get_top_channels(db_pool, server_id):
 async def bump(db_pool, server_id, user_id):
     async with db_pool.acquire() as connection:
         async with connection.transaction():
+            server_user = await get_server_user(db_pool, server_id, user_id)
+
             count = await connection.fetchval(
-                f"SELECT count FROM bumps WHERE server_id = {server_id} AND user_id = {user_id}"
+                f"SELECT count FROM bumps WHERE server_user_id = {server_user}"
             )
             if not count:
                 count = 1
-                await connection.execute(
-                    f"INSERT INTO bumps (server_id, user_id, count) VALUES ($1, $2, $3) ON CONFLICT (server_id, user_id) DO NOTHING",
-                    server_id, user_id, count
-                )
             else:
                 count += 1
-                await connection.execute(
-                    f"UPDATE bumps SET count = {count} WHERE server_id = {server_id} AND user_id = {user_id}"
-                )
+            
+            await connection.execute(
+                f"INSERT INTO bumps (server_user_id, count) VALUES ($1, $2) ON CONFLICT (server_user_id) DO UPDATE SET count = $2",
+                server_user, count
+            )
 
             return count
 
@@ -147,4 +147,18 @@ async def set_default_role(db_pool, server_id, role_id):
             await connection.execute(
                 f"INSERT INTO servers (id, default_role) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET default_role = $2",
                 server_id, role_id
+            )
+
+async def flush_db(db_pool, table, server_id):
+    async with db_pool.acquire() as connection:
+        async with connection.transaction():
+            await connection.execute(
+                f"DELETE FROM {table} WHERE server_id = {server_id}"
+            )
+            
+async def flush_db_all(db_pool, table, server_id):
+    async with db_pool.acquire() as connection:
+        async with connection.transaction():
+            await connection.execute(
+                f"DELETE FROM {table} WHERE server_id = {server_id}"
             )

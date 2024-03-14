@@ -1,7 +1,9 @@
 import discord
 import asyncio, asyncpg
 from discord.ext import commands
-from data.databases.events import get_default_role
+from data.databases.events import (get_default_role,
+                                   flush_db,
+                                   flush_db_all)
 import json
 import os
 import time
@@ -25,6 +27,27 @@ class Admin(commands.Cog):
                 await channel.set_permissions(target, overwrite=None)
         await ctx.send('Permissions cleared...')
 
+    @commands.is_owner()
+    @commands.group()
+    async def databases(self, ctx: commands.Context, *args: str):
+        if ctx.invoked_subcommand is None:
+            await ctx.send('Invalid databases command passed...')
+
+    # !incomplete, not important, not urgent. careful when implementing
+    @databases.command()
+    async def flush(self, ctx: commands.Context, *args: str):
+        if not args:
+            await ctx.send('No databases specified to flush...')
+            return
+        for db in args:
+            if db == "all":
+                await ctx.send('Flushing all tables...')
+                # await flush_db_all(self.bot.db_pool, db, ctx.guild.id)
+                return
+            else:
+                await ctx.send(f'Flushing table {db}...')
+            asyncio.sleep(1)
+                # await flush_db(self.bot.db_pool, db, ctx.guild.id)
 
     #TODO permission checks
     @commands.is_owner()
