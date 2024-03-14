@@ -14,7 +14,7 @@ from data.databases.events import (
                                 set_user,
                                 set_server_user,
                                 set_server_user_role,
-                                get_server_user, #! anytime you use this, validate data. if not present, set it.
+                                get_server_user, #! anytime you use this, if not present, set it; must validate.
                                 get_server_user_roles,
                                 delete_role,
                                 delete_user_role
@@ -54,7 +54,7 @@ class aBotHasNoName(commands.Bot):
         logger.addHandler(handler)
 
         
-        db_pool = await asyncpg.create_pool(dsn=os.getenv('DATABASE_URL'), min_size=16, max_size=32)
+        db_pool = await asyncpg.create_pool(dsn=os.getenv('DATABASE_URL'), min_size=8, max_size=16)
         self.db_pool = db_pool
 
         # .loading extensions
