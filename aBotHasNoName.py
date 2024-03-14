@@ -87,14 +87,13 @@ class aBotHasNoName(commands.Bot):
     async def on_guild_join(self, guild: discord.Guild) -> None:
         start_time = time.time()
 
-        channel_id = 950272804085989446
-        channel = self.get_channel(channel_id)
+        #channel = self.get_channel(channel_id)
 
-        channel.send(f'Setting up {guild.name}...')
+        #await channel.send(f'Setting up {guild.name}...')
         await set_server(self.db_pool, guild.id)
 
         # .loading all the present users and their roles in the server to the database.
-        channel.send(f'Loading users and their roles in {guild.name}...')
+        #await channel.send(f'Loading users and their roles in {guild.name}...')
         users = guild.members
         for user in users:
             await set_user(self.db_pool, user.id)
@@ -105,10 +104,10 @@ class aBotHasNoName(commands.Bot):
                 roles = user.roles
                 for role in roles:
                     await set_server_user_role(self.db_pool, server_user, role.id)
-        channel.send(f'{guild.name} setup complete!')
+        #await channel.send(f'{guild.name} setup complete!')
 
         end_time = time.time()
-        channel.send(f'Setup took {end_time - start_time} seconds to complete...')
+        #await channel.send(f'Setup took {end_time - start_time} seconds to complete...')
 
     # !should not remove server from database, as it would remove all the users and their roles from the server.
     async def on_guild_remove(self, guild: discord.Guild) -> None:
