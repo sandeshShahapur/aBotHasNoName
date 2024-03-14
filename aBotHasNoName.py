@@ -14,7 +14,7 @@ from data.databases.events import (
                                 set_user,
                                 set_server_user,
                                 set_server_user_role,
-                                get_server_user,
+                                get_server_user, #! anytime you use this, validate data. if not present, set it.
                                 get_server_user_roles,
                                 delete_role,
                                 delete_user_role
@@ -94,6 +94,8 @@ class aBotHasNoName(commands.Bot):
 
         # .loading all the present users and their roles in the server to the database.
         #await channel.send(f'Loading users and their roles in {guild.name}...')
+        #channel.send(f'Loading users and their roles in {guild.name}...')
+        #TODO potential data inconsistency where the bot is removed from the server and a member when removed a role, the bot would not be able to remove the role from the database.
         users = guild.members
         for user in users:
             await set_user(self.db_pool, user.id)
@@ -138,8 +140,14 @@ class aBotHasNoName(commands.Bot):
         pass
 
     async def on_member_update(self, before: discord.Member, after: discord.Member) -> None:
-        # .role updates
+        # *role updates
         server_user = await get_server_user(self.db_pool, after.guild.id, after.id)
+        if not server_user:
+            await set_server(self.db_pool, after.guild.id)
+            await set_user(self.db_pool, after.id)
+            await set_server_user(self.db_pool, after.guild.id, after.id)
+            server_user = await get_server_user(self.db_pool, after.guild.id, after.id)
+
         deleted_roles = list(set(before.roles) - set(after.roles))
         added_roles = list(set(after.roles) - set(before.roles))
         for role in deleted_roles:
