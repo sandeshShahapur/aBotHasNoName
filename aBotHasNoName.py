@@ -8,7 +8,7 @@ import json
 from dotenv import load_dotenv
 import logging, logging.handlers
 from typing import List, Optional
-from databases.events import (
+from data.databases.events import (
                                 get_prefix,
                                 set_server,
                                 set_user,
@@ -19,6 +19,7 @@ from databases.events import (
                                 delete_role,
                                 delete_user_role
                             )
+import time
 
 import asyncpg
 
@@ -71,6 +72,7 @@ class aBotHasNoName(commands.Bot):
         print(f'{self.user} has connected to Discord!')
 
     async def on_ready(self) -> None:
+        await self.change_presence(status=discord.Status.online, activity=discord.Game('.help and your mom'))
         print(f'{self.user} is ready!')
 
     async def on_disconnect(self) -> None:
@@ -78,13 +80,21 @@ class aBotHasNoName(commands.Bot):
 
     async def on_resumed(self) -> None:
         print(f'{self.user} has resumed connection in Discord!')
+        await self.change_presence(status=discord.Status.online, activity=discord.Game('.help and your mom'))
 
     #TODO practically, would require permissions checks.
     #TODO add exception handling    
     async def on_guild_join(self, guild: discord.Guild) -> None:
+        start_time = time.time()
+
+        channel_id = 950272804085989446
+        channel = self.get_channel(channel_id)
+
+        channel.send(f'Setting up {guild.name}...')
         await set_server(self.db_pool, guild.id)
 
         # .loading all the present users and their roles in the server to the database.
+        channel.send(f'Loading users and their roles in {guild.name}...')
         users = guild.members
         for user in users:
             await set_user(self.db_pool, user.id)
@@ -95,6 +105,10 @@ class aBotHasNoName(commands.Bot):
                 roles = user.roles
                 for role in roles:
                     await set_server_user_role(self.db_pool, server_user, role.id)
+        channel.send(f'{guild.name} setup complete!')
+
+        end_time = time.time()
+        channel.send(f'Setup took {end_time - start_time} seconds to complete...')
 
     # !should not remove server from database, as it would remove all the users and their roles from the server.
     async def on_guild_remove(self, guild: discord.Guild) -> None:
@@ -149,7 +163,7 @@ def main() -> None:
         owner_id = config['owner_id']
 
     intents = discord.Intents.all() #intent basically allows a bot to subscribe to specific buckets of events
-    initial_extensions = ['Cogs.Stats', 'Cogs.Messages', 'Cogs.Configs']
+    initial_extensions = ['Cogs.Stats', 'Cogs.Messages', 'Cogs.Configs', 'Cogs.Admin']
     description = '''A bot that has no name'''
 
     bot = aBotHasNoName(

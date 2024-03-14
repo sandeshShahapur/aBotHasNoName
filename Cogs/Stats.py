@@ -2,7 +2,7 @@ import asyncio
 import discord
 from discord.ext import commands
 from datetime import datetime
-from databases.events import get_top_users, get_top_channels
+from data.databases.events import get_top_users, get_top_channels
 
 
 class Stats(commands.Cog):
