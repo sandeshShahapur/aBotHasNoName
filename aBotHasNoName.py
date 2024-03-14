@@ -71,6 +71,7 @@ class aBotHasNoName(commands.Bot):
         print(f'{self.user} has connected to Discord!')
 
     async def on_ready(self) -> None:
+        await self.change_presence(status=discord.Status.online, activity=discord.Game('.help and your mom'))
         print(f'{self.user} is ready!')
 
     async def on_disconnect(self) -> None:
@@ -78,6 +79,7 @@ class aBotHasNoName(commands.Bot):
 
     async def on_resumed(self) -> None:
         print(f'{self.user} has resumed connection in Discord!')
+        await self.bot.change_presence(status=discord.Status.online, activity=discord.Game('.help and your mom'))
 
     #TODO practically, would require permissions checks.
     #TODO add exception handling    
