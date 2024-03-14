@@ -1,15 +1,30 @@
 import discord
-import asyncio
+import asyncio, asyncpg
 from discord.ext import commands
 from data.databases.events import get_default_role
 import json
-import asyncpg
+import os
+import time
 
 
 class Admin(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.ld_permissions = ["send_messages", "add_reactions", "create_public_threads", "create_private_threads", "send_messages_in_threads", "use_application_commands", "connect"] #TODO make this abstract
+
+    @commands.is_owner()
+    @commands.command()
+    async def clearAllPermissions(self, ctx: commands.Context, *args: str):
+        targets = await self.get_targets(ctx, *args)
+        if not targets:
+            ctx.send('Aborting, no valid targets found...')
+            return
+
+        for channel in ctx.guild.text_channels + ctx.guild.voice_channels:
+            for target in targets:
+                await channel.set_permissions(target, overwrite=None)
+        await ctx.send('Permissions cleared...')
+
 
     #TODO permission checks
     @commands.is_owner()
@@ -19,8 +34,10 @@ class Admin(commands.Cog):
             #TODO implement default lockdown of context's channel
             await ctx.send('Invalid lockdown command passed...')
 
-    @lockdown.command()
-    async def maintainance(self, ctx: commands.Context,  *args: str): #users: discord.Member = None, roles: discord.Role = None,
+    @lockdown.command(name="maintainance")
+    async def lockdown_maintainance(self, ctx: commands.Context,  *args: str):
+        start_time = time.time()
+        
         await ctx.send('Maintainance mode activated...\n All commands are disabled...\n')
         await self.bot.change_presence(status=discord.Status.dnd, activity=discord.Game('Maintainance mode...'))
     
@@ -65,6 +82,8 @@ class Admin(commands.Cog):
             json.dump(json_data, f)
         await ctx.send('Lockdown sequence complete...\n\n Good luck when unlocking...')
 
+        end_time = time.time()
+        await ctx.send(f'\nLockdown sequence took {end_time - start_time} seconds to complete...')
 
     @commands.is_owner()
     @commands.group()
@@ -74,31 +93,53 @@ class Admin(commands.Cog):
             await ctx.send('Invalid unlock command passed...')
 
         
-    '''@unlock.command()
-    async def maintainance(self, ctx: commands.Context, *args: str):
-        if not args:
-            default_role = await get_default_role(self.bot.db_pool, ctx.guild.id)
-            targets = ctx.guild.get_role(default_role)
-            if not targets:
-                await ctx.send('Aborting, no default role set for this server...')
-                return
+    @unlock.command(name="maintainance")
+    async def unlock_maintainance(self, ctx: commands.Context, *args: str):
+        startTime = time.time()
 
-            await ctx.send('Lockdown to terminate unspecified...')
+        lockdown_file_path = f"data/json/lockdowns/{ctx.guild.name}_lockdown.json"
+        if not os.path.exists(lockdown_file_path):
+            await ctx.send('No lockdown file found for this server...\n Aborting')
+            return
+        with open(lockdown_file_path, "r") as f:
+            json_data = json.load(f)
         
-        if args[0] == "maintainance":
-            # *unlocking channels and setting up json data to remember which channel perms to lock
-            await ctx.send('Terminating maintainance lockdown...')
-            await ctx.send('Unlocking channels...')
-            with open(f"data/json/lockdowns/{ctx.guild.name}_lockdown.json", "r") as f:
-                json_data = json.load(f)
+        # *unlocking channels and setting up json data to remember which channel perms to lock
+        await ctx.send('Terminating maintainance lockdown...')
+        ld_permissions = json_data["ld_permissions"]
+        targets = [ctx.guild.get_role(target) or ctx.guild.get_member(target) for target in json_data["targets"]]
+        await ctx.send('Unlocking channels...')
 
-            for channel in ctx.guild.text_channels + ctx.guild.voice_channels:
-                for 
+        # *unlocking channels for targets of permissions that are not present in json i.e. retaining the prior locked channels before the lockdown
+        json_channels = json_data["channels"]
+        for channel in ctx.guild.text_channels + ctx.guild.voice_channels:
+            channel_present = json_channels and channel.id in [json_channel["channel_id"] for json_channel in json_channels]
+            if channel_present:
+                json_targets = [json_target for json_channel in json_channels if json_channel["channel_id"] == channel.id for json_target in json_channel["targets"]]
+            else:
+                json_targets = []
 
-            await ctx.send('Unlock sequence complete...')
-            await ctx.send('Maintainance lockdown terminated...')
-            await self.bot.change_presence(status=discord.Status.online, activity=discord.Game('.help and your mom'))
-            await ctx.send("Hoping perms aren't fu*ked.")'''
+            for target in targets:
+                target_present = json_targets and target.id in [json_target["target_id"] for json_target in json_targets]
+                if target_present:
+                    json_permissions = [json_permission for json_target in json_targets if json_target["target_id"] == target.id for json_permission in json_target["permissions"]]
+                else:
+                    json_permissions = []
+
+                for ld_permission in ld_permissions:
+                    if ld_permission not in json_permissions:
+                        cur_perms = channel.overwrites_for(target)
+                        setattr(cur_perms, ld_permission, True)
+                        await channel.set_permissions(target, overwrite=cur_perms)
+
+        await ctx.send('Unlock sequence complete...')
+        os.remove(lockdown_file_path)
+        await ctx.send('Maintainance lockdown terminated...')
+        await self.bot.change_presence(status=discord.Status.online, activity=discord.Game('.help and your mom'))
+        await ctx.send("Hoping perms aren't fu*ked.")
+
+        endTime = time.time()
+        await ctx.send(f'\nUnlock sequence took {endTime - startTime} seconds to complete...')
                 
 
     async def get_targets(self, ctx: commands.Context, *args):
