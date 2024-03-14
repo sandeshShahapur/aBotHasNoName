@@ -87,11 +87,9 @@ async def get_top_channels(db_pool, server_id):
                 f"SELECT channel_id, COUNT(*) as message_count FROM messages_main where server_id = {server_id} GROUP BY channel_id ORDER BY message_count DESC LIMIT 3"
             )
 
-async def bump(db_pool, server_id, user_id):
+async def bump(db_pool, server_user):
     async with db_pool.acquire() as connection:
         async with connection.transaction():
-            server_user = await get_server_user(db_pool, server_id, user_id)
-
             count = await connection.fetchval(
                 f"SELECT count FROM bumps WHERE server_user_id = {server_user}"
             )
