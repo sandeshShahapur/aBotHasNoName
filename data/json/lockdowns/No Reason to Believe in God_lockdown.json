@@ -1,0 +1,13 @@
+{
+  "targets": [953111712494669896],
+  "ld_permissions": [
+    "send_messages",
+    "add_reactions",
+    "create_public_threads",
+    "create_private_threads",
+    "send_messages_in_threads",
+    "use_application_commands",
+    "connect"
+  ],
+  "channels": []
+}

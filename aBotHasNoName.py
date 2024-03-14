@@ -14,7 +14,7 @@ from data.databases.events import (
                                 set_user,
                                 set_server_user,
                                 set_server_user_role,
-                                get_server_user, #! anytime you use this, validate data. if not present, set it.
+                                get_server_user, #! anytime you use this, if not present, set it; must validate.
                                 get_server_user_roles,
                                 delete_role,
                                 delete_user_role
@@ -23,7 +23,7 @@ import time
 
 import asyncpg
 
-load_dotenv("development.env")
+load_dotenv("main.env")
 class aBotHasNoName(commands.Bot):
     def __init__(
         self,
@@ -54,7 +54,7 @@ class aBotHasNoName(commands.Bot):
         logger.addHandler(handler)
 
         
-        db_pool = await asyncpg.create_pool(dsn=os.getenv('DATABASE_URL'), min_size=16, max_size=32)
+        db_pool = await asyncpg.create_pool(dsn=os.getenv('DATABASE_URL'), min_size=8, max_size=16)
         self.db_pool = db_pool
 
         # .loading extensions
@@ -87,13 +87,13 @@ class aBotHasNoName(commands.Bot):
     async def on_guild_join(self, guild: discord.Guild) -> None:
         start_time = time.time()
 
-        #channel_id = 950272804085989446
         #channel = self.get_channel(channel_id)
 
-        #channel.send(f'Setting up {guild.name}...')
+        #await channel.send(f'Setting up {guild.name}...')
         await set_server(self.db_pool, guild.id)
 
         # .loading all the present users and their roles in the server to the database.
+        #await channel.send(f'Loading users and their roles in {guild.name}...')
         #channel.send(f'Loading users and their roles in {guild.name}...')
         #TODO potential data inconsistency where the bot is removed from the server and a member when removed a role, the bot would not be able to remove the role from the database.
         users = guild.members
@@ -106,10 +106,10 @@ class aBotHasNoName(commands.Bot):
                 roles = user.roles
                 for role in roles:
                     await set_server_user_role(self.db_pool, server_user, role.id)
-        #channel.send(f'{guild.name} setup complete!')
+        #await channel.send(f'{guild.name} setup complete!')
 
         end_time = time.time()
-        #channel.send(f'Setup took {end_time - start_time} seconds to complete...')
+        #await channel.send(f'Setup took {end_time - start_time} seconds to complete...')
 
     # !should not remove server from database, as it would remove all the users and their roles from the server.
     async def on_guild_remove(self, guild: discord.Guild) -> None:
