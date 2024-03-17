@@ -1,7 +1,12 @@
 import discord
 import asyncio
 from discord.ext import commands
-from data.databases.events import set_prefix, get_prefix, set_default_role, get_default_role
+from data.databases.stats.servers import (get_prefix, 
+                                          set_prefix, 
+                                          get_default_role, 
+                                          set_default_role 
+                                        )
+from data.databases.db_management import validate_server
 from typing import Union
 
 class Configs(commands.Cog):
@@ -21,9 +26,13 @@ class Configs(commands.Cog):
             description =   f"**Prefix**: {prefix}\n **Default Role**: {role.name if role else 'None'}"
             embed = discord.Embed(title=title, description=description, color=discord.Color.blue())
             await ctx.send(embed=embed)
+        
+    async def common_validation(self, server):
+        await validate_server(self.bot.db_pool, server)
 
     @config.command()
     async def prefix(self, ctx, prefix):
+        await self.common_validation(ctx.guild.id)
         if len(prefix) > 5:
             await ctx.send("Prefix cannot be longer than 5 characters")
         else:
@@ -33,6 +42,7 @@ class Configs(commands.Cog):
     #TODO add permission checks, fix potentioal bug with valid role name being a number
     @config.command()
     async def default_role(self, ctx, role: str = "None"):
+        await self.common_validation(ctx.guild.id)
         if role == "None":
             await ctx.send("No role provided, please provide a valid role")
             return
