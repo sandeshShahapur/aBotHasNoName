@@ -2,7 +2,7 @@ import discord
 import asyncio, asyncpg
 from discord.ext import commands
 from data.databases.stats.servers import (get_default_role)
-from data.databases.db_management import (validate_server, flush_db, flush_db_all)
+from data.databases.db_management import (update_db, validate_server, flush_db, flush_db_all)
 import json
 import os
 import time
@@ -28,9 +28,14 @@ class Admin(commands.Cog):
 
     @commands.is_owner()
     @commands.group()
-    async def databases(self, ctx: commands.Context, *args: str):
+    async def databases(self, ctx: commands.Context):
         if ctx.invoked_subcommand is None:
             await ctx.send('Invalid databases command passed...')
+
+    @databases.command()
+    async def sync_server(self, ctx: commands.Context):
+        await update_db(ctx, self.bot.db_pool, ctx.guild)
+        await ctx.send('Server sync complete...')
 
     # !incomplete, not important, not urgent. careful when implementing
     @databases.command()

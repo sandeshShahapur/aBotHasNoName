@@ -1,3 +1,4 @@
+'''''''''''''''''''''SERVER USER'''''''''''''''''''''''
 async def get_server_user_roles(db_pool, server_user_id):
     async with db_pool.acquire() as connection:
         async with connection.transaction():
@@ -20,14 +21,16 @@ async def delete_server_user_role(db_pool, server_user_id, role_id):
                 f"DELETE FROM server_user_roles WHERE server_user_id = {server_user_id} AND role_id = {role_id}"
             )
 
-        
+#TODO update        
 async def delete_role(db_pool, role_id):
     async with db_pool.acquire() as connection:
         async with connection.transaction():
             await connection.execute(
                 f"DELETE FROM server_user_roles WHERE role_id = {role_id}"
             )
-''''''''''''''''''''''''''''''''''''
+
+
+'''''''''''''''''''''ROLE CATEGORY'''''''''''''''''''''''
 async def set_role_category(db_pool, role_category):
     async with db_pool.acquire() as connection:
         async with connection.transaction():
@@ -62,7 +65,7 @@ async def get_roles_in_category(db_pool, category_id):
     async with db_pool.acquire() as connection:
         async with connection.transaction():
             return await connection.fetch(
-                f"SELECT role FROM server_role_categories_roles WHERE server_role_category = {category_id}"
+                f"SELECT role_id FROM server_role_categories_roles WHERE server_role_category = {category_id}"
             )
         
 async def delete_server_role_category_roles(db_pool, server_role_category_id):
@@ -99,7 +102,7 @@ async def set_server_role_category_role(db_pool, server_role_category_id, role_i
     async with db_pool.acquire() as connection:
         async with connection.transaction():
             await connection.execute(
-                f"INSERT INTO server_role_categories_roles (server_role_category, role) VALUES ($1, $2) ON CONFLICT (server_role_category, role) DO NOTHING",
+                f"INSERT INTO server_role_categories_roles (server_role_category, role_id) VALUES ($1, $2) ON CONFLICT (server_role_category, role_id) DO NOTHING",
                 server_role_category_id, role_id
             )
 
@@ -107,5 +110,21 @@ async def delete_server_role_category_role(db_pool, server_role_category_id, rol
     async with db_pool.acquire() as connection:
         async with connection.transaction():
             await connection.execute(
-                f"DELETE FROM server_role_categories_roles WHERE server_role_category = {server_role_category_id} AND role = {role_id}"
+                f"DELETE FROM server_role_categories_roles WHERE server_role_category = {server_role_category_id} AND role_id = {role_id}"
+            )
+
+
+'''''''''''''''''''''ROLE STATs'''''''''''''''''''''''
+async def get_role_count(db_pool, role_id):
+    async with db_pool.acquire() as connection:
+        async with connection.transaction():
+            return await connection.fetchval(
+                f"SELECT COUNT(*) from server_user_roles where role_id = {role_id}"
+            )
+        
+async def get_categories_of_role(db_pool, role_id):
+    async with db_pool.acquire() as connection:
+        async with connection.transaction():
+            return await connection.fetch(
+                f"SELECT role_category from server_role_categories where server_role_category in (SELECT server_role_category from server_role_categories_roles where role_id = {role_id})"
             )

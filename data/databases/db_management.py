@@ -6,16 +6,14 @@ import time
 
 # *update and validata data in db
 
-async def update_db(db_pool, server):
+async def update_db(ctx, db_pool, server):
     start_time = time.time()
 
-    #channel = self.get_channel(channel_id)
-
-    #await channel.send(f'Setting up {server.name}...')
+    await ctx.send(f'Setting up {ctx.guild.name}...')
 
     # .loading all the present users and their roles in the server to the database.
-    #await channel.send(f'Loading users and their roles in {server.name}...')
-    #channel.send(f'Loading users and their roles in {server.name}...')
+    await ctx.send(f'Loading users and their roles in {server.name}...')
+    await ctx.send(f'Loading users and their roles in {server.name}...')
     #TODO potential data inconsistency where the bot is removed from the server and a member when removed a role, the bot would not be able to remove the role from the database.
     await set_server(db_pool, server.id)
     users = server.members
@@ -28,10 +26,10 @@ async def update_db(db_pool, server):
             roles = user.roles
             for role in roles:
                 await set_server_user_role(db_pool, server_user, role.id)
-    #await channel.send(f'{server.name} setup complete!')
+    await ctx.send(f'{server.name} setup complete!')
 
     end_time = time.time()
-    #await channel.send(f'Setup took {end_time - start_time} seconds to complete...')
+    await ctx.send(f'Setup took {end_time - start_time} seconds to complete...')
 
 async def validate_server(db_pool, server):
     server = await get_server(db_pool, server.id)

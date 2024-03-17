@@ -6,16 +6,10 @@ from data.databases.stats.servers import get_server, set_server
 from data.databases.stats.users import get_top_users
 from data.databases.stats.channels import get_top_channels
 from data.databases.stats.roles import (
-                                get_server_role_categories, 
                                 get_server_role_category_id, 
                                 get_roles_in_category,
-                                set_role_category,
-                                set_server_role_category_id,
-                                delete_server_role_category_roles,
-                                delete_server_role_category_id,
-                                delete_role_category,
-                                set_server_role_category_role,
-                                delete_server_role_category_role
+                                get_role_count,
+                                get_categories_of_role
                             )
 from data.databases.db_management import update_db
 
@@ -25,7 +19,7 @@ class Stats(commands.Cog):
         self.bot = bot
 
     #TODO make this display the summary
-    @commands.group(name="stats")
+    @commands.group(name="stats", invoke_without_command=False)
     async def stats(self, ctx):
         if ctx.invoked_subcommand is None:
             top_users = await get_top_users(self.bot.db_pool, ctx.guild.id)
@@ -45,114 +39,88 @@ class Stats(commands.Cog):
             daysNum = (datetime.now().date() - initialDate).days
             message += f"\n\n Stats are produced from the previous {daysNum} days of data."
 
-            await ctx.reply(message)
+            await ctx.send(message)
 
-    async def common_validation(self, server):
-        if not await get_server(self.bot.db_pool, server.id):
-            await update_db(self.bot.db_pool, server)
-
-    @stats.group(name="roles")
-    async def roles(self, ctx):
-        await self.common_validation(ctx.guild)
-
+    '''''''''''''''''ROLES STATS'''''''''''''''''''''
+    @stats.group(invoke_without_command=False, name="roles")
+    async def stats_roles(self, ctx, category=None, role=None):
+        category = None if category == "none" else category
+         # *assumning at most only one category and role is passed for now
         if ctx.invoked_subcommand is None:
-            await ctx.reply("im here to help you with roles")
+            prison, sussy_baka = 1218806346342727771, 1217226799235469543 #953341678746480690, 1079122386995122236
+            if category:
+                category_id = await get_server_role_category_id(self.bot.db_pool, ctx.guild.id, category)
+                if not category_id:
+                    await ctx.reply(f"Role category {category} does not exist.")
+                    return
+            if role:
+                server_roles = [server_role.id for server_role in ctx.guild.roles]
+                if not role.isdigit() or int(role) not in server_roles:
+                    await ctx.reply(f"Role {role} does not exist in server")
+                    return
+            
+            # *if both a role and category are passed
+            if category and role:
+                await self.stats_of_role_in_category(ctx, category, role)
 
-    @roles.group(name="categories")
-    async def categories(self, ctx):
-        await self.common_validation(ctx.guild)
+            # *if only a category is passed
+            elif category:
 
-        if ctx.invoked_subcommand is None:
-            await ctx.reply("im here to help you with categories")
+                category_roles = [record["role_id"] for record in await get_roles_in_category(self.bot.db_pool, category_id)] 
+                category_role_count = 0
+                role_counts = []
+                for i, role in enumerate(category_roles):
+                    role_counts.append(await get_role_count(self.bot.db_pool, role))
+                    category_role_count += role_counts[i]
+                role_percentages = [(role_counts[i] / category_role_count) * 100 for i in range(len(category_roles))]
 
-    @categories.command(name="ls")
-    async def ls(self, ctx):
-        await self.common_validation(ctx.guild)
+                message = f"Roles in category **{category}** are:\n"
+                for i, role in enumerate(category_roles):
+                    message += f"- Role **{ctx.guild.get_role(role).name}** has **{role_counts[i]}** members, which is **{role_percentages[i]:.{2}f}%** of the members.\n"
+                await ctx.send(message)
 
-        categories = await get_server_role_categories(self.bot.db_pool, ctx.guild.id)
-        if not categories:
-            await ctx.reply("No categories found.")
-            return
-        else:
-            message = "The categories are:"
-            for category in categories:
-                message += f"\n \t**{category[0]}**\n"
-                category_id = await get_server_role_category_id(self.bot.db_pool, ctx.guild.id, category[0])
-                roles = await get_roles_in_category(self.bot.db_pool, category_id)
-                for role in roles:
-                    message += f"\n- {ctx.guild.get_role(role[0]).name}"
-            await ctx.reply(message)
+            # *if only a role is passed
+            elif role:
+                categories = await get_categories_of_role(self.bot.db_pool, int(role))
+                categories = [record[0] for record in categories]
+                if not categories:
+                    await ctx.reply(f"Role **{ctx.guild.get_role(int(role)).name}** does not exist in any category")
+                    return
+                await ctx.send(f"Role **{ctx.guild.get_role(int(role)).name}** is in categories **{categories}**")
+                for category in categories:
+                    await self.stats_of_role_in_category(ctx, category, role)
 
-    @categories.command(name="create")
-    async def create(self, ctx, category, *roles):
-        await self.common_validation(ctx.guild)
-
-        if await get_server_role_category_id(self.bot.db_pool, ctx.guild.id, category):
-            await ctx.reply("Category already exists.")
-            return
-
-        await set_role_category(self.bot.db_pool, category)
-        await set_server_role_category_id(self.bot.db_pool, ctx.guild.id, category)
-        server_role_category = await get_server_role_category_id(self.bot.db_pool, ctx.guild.id, category)
-        if not server_role_category:
-            await ctx.reply("Category does not exist.")
-            return
-
-        await self.add_roles_to_server_category(ctx, server_role_category, roles)
-
-    @categories.command(name="delete")
-    async def delete(self, ctx, category):
-        await self.common_validation(ctx.guild)
-
-        server_role_category_id = await get_server_role_category_id(self.bot.db_pool, ctx.guild.id, category)
-        if not server_role_category_id:
-            await ctx.reply("Category does not exist.")
-            return
-
-        await delete_server_role_category_roles(self.bot.db_pool, server_role_category_id)
-        await delete_server_role_category_id(self.bot.db_pool, server_role_category_id)
-        await ctx.reply(f"Category {category} has been deleted.")
-        await delete_role_category(self.bot.db_pool, category)
-    
-    @categories.command(name="add_roles")
-    async def add_roles(self, ctx, category, *roles):
-        await self.common_validation(ctx.guild)
-
-        server_role_category_id = await get_server_role_category_id(self.bot.db_pool, ctx.guild.id, category)
-        if not server_role_category_id:
-            await ctx.reply("Category does not exist.")
-            return
-
-        await self.add_roles_to_server_category(ctx, server_role_category_id, roles)
-
-    async def add_roles_to_server_category(self, ctx, server_role_category, roles):
-        server_roles = [server_role.id for server_role in ctx.guild.roles]
-        roles = [int(role) for role in roles if role.isdigit()]
-        for role in roles:
-            if role in server_roles:
-                await set_server_role_category_role(self.bot.db_pool, server_role_category, role)
-                await ctx.reply(f"Role {role} has been added to the category.")
+            # *if neither a role nor a category is passed
             else:
-                await ctx.reply(f"Role {role} does not exist in the server.")
+                server_roles = ctx.guild.roles
+                server_roles_count = len(server_roles)
+                member_count = ctx.guild.member_count
+                bot_role_count = 0
+                for role in server_roles:
+                    if role.is_bot_managed:
+                        bot_role_count += 1
+                member_role_count = abs(member_count - bot_role_count)
+                prison_count = await get_role_count(self.bot.db_pool, prison)
+                sussy_baka_count = await get_role_count(self.bot.db_pool, sussy_baka)
+                average_role_count = member_count / server_roles_count
 
-    @categories.command(name="remove_roles")
-    async def remove_roles(self, ctx, category, *roles):
-        await self.common_validation(ctx.guild)
+                message = f"Server {ctx.guild.name} has:\n **{member_count}** members\n **{bot_role_count+member_count}** roles \n **{bot_role_count}** bot-roles\n **{member_role_count}** member-roles\n **{average_role_count:.{2}f}** average roles per member\n\n **{prison_count}** members in prison\n **{sussy_baka_count}** sussy bakas = **{sussy_baka_count/member_count*100:.{2}f}%** of members have not assigned themselves a role."
+                await ctx.send(message)
 
-        server_role_category_id = await get_server_role_category_id(self.bot.db_pool, ctx.guild.id, category)
-        if not server_role_category_id:
-            await ctx.reply("Category does not exist.")
+    async def stats_of_role_in_category(self, ctx, category, role):
+        category_id = await get_server_role_category_id(self.bot.db_pool, ctx.guild.id, category)
+        category_roles = [record["role_id"] for record in await get_roles_in_category(self.bot.db_pool, category_id)] 
+        if not role.isdigit() or int(role) not in category_roles:
+            await ctx.reply(f"Role {role} does not exist in category {category}")
             return
+            
+        role_count = await get_role_count(self.bot.db_pool, role)
+        category_role_count = 0
+        for rolz in category_roles:
+            category_role_count += await get_role_count(self.bot.db_pool, rolz)
+        role_percentage = (role_count / category_role_count) * 100
 
-        server_roles = [server_role.id for server_role in ctx.guild.roles]
-        roles = [int(role) for role in roles if role.isdigit()]
-        for role in roles:
-            if role in server_roles:
-                await delete_server_role_category_role(self.bot.db_pool, server_role_category_id, role)
-                await ctx.reply(f"Role {role} has been removed from the category.")
-            else:
-                await ctx.reply(f"Role {role} does not exist in the server.")
-        
+        await ctx.send(f"- Role **{ctx.guild.get_role(int(role)).name}** has **{role_count}** members in category **{category}**, which is **{role_percentage:.{2}f}%** of the members.\n")
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Stats(bot)) 
