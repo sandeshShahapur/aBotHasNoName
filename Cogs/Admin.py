@@ -1,9 +1,8 @@
 import discord
 import asyncio, asyncpg
 from discord.ext import commands
-from data.databases.events import (get_default_role,
-                                   flush_db,
-                                   flush_db_all)
+from data.databases.stats.servers import (get_default_role)
+from data.databases.db_management import (validate_server, flush_db, flush_db_all)
 import json
 import os
 import time
@@ -167,6 +166,7 @@ class Admin(commands.Cog):
 
     async def get_targets(self, ctx: commands.Context, *args):
         if not args:
+            validate_server(self.bot.db_pool, ctx.guild.id)
             default_role = await get_default_role(self.bot.db_pool, ctx.guild.id)
             targets = ctx.guild.get_role(default_role)
             if not targets:
