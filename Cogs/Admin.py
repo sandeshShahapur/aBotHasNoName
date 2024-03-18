@@ -15,6 +15,16 @@ class Admin(commands.Cog):
 
     @commands.is_owner()
     @commands.command()
+    async def json_role_id(self, ctx: commands.Context):
+        role_ids = [[]]
+        for role in ctx.guild.roles:
+            role_ids.append([role.name, role.id])
+        with open("data/json/role_ids.json", "w") as f:
+            json.dump(role_ids, f)
+    
+    
+    @commands.is_owner()
+    @commands.command()
     async def clearAllPermissions(self, ctx: commands.Context, *args: str):
         targets = await self.get_targets(ctx, *args)
         if not targets:

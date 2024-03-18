@@ -36,7 +36,7 @@ class Messages(commands.Cog):
         disboard = 302050872383242240
         if message.embeds and message.author.id == disboard and message.embeds[0].description.startswith('Bump done!'):
             bumper = message.interaction.user
-            server_user = await validate_user(self.bot.db_pool, message.guild.id, bumper.id) #we recquire valid server_user
+            server_user = await validate_user(self.bot.db_pool, message.guild, bumper.id) #we recquire valid server_user
             count = await bump(self.bot.db_pool, server_user)
 
             # ?should i not use sleep here because resetting bot will lose the reminder?
