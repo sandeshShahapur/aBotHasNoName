@@ -28,7 +28,7 @@ import time
 
 import asyncpg
 
-load_dotenv("development.env")
+load_dotenv("main.env")
 class aBotHasNoName(commands.Bot):
     def __init__(
         self,
@@ -59,7 +59,7 @@ class aBotHasNoName(commands.Bot):
         logger.addHandler(handler)
 
         
-        db_pool = await asyncpg.create_pool(dsn=os.getenv('DATABASE_URL'), min_size=8, max_size=16)
+        db_pool = await asyncpg.create_pool(dsn=os.getenv('DATABASE_URL'), min_size=16, max_size=32)
         self.db_pool = db_pool
 
         # .loading extensions
