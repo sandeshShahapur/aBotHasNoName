@@ -27,10 +27,8 @@ class Messages(commands.Cog):
             server_id = message.guild.id
             channel_id = message.channel.id
             user_id = message.author.id
-            datetime = convert_utc_to_ist(message.created_at)
-            date = datetime.date()
-            time = datetime.time()
-            await log_message(self.bot.db_pool, message_id, server_id, user_id, channel_id, date, time)
+            datetime = message.created_at
+            await log_message(self.bot.db_pool, message_id, server_id, user_id, channel_id, datetime)
 
         # *bump reminder
         disboard = 302050872383242240

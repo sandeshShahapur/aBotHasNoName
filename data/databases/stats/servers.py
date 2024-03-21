@@ -40,13 +40,12 @@ async def set_prefix(db_pool, server_id, prefix):
             )
 
 #TODO add permission checks    
-async def get_default_role(db_pool, server):
+async def get_default_role(db_pool, server_id):
     async with db_pool.acquire() as connection:
         async with connection.transaction():
-            default_role = await connection.fetchval(
-                f"SELECT default_role FROM servers where id = {server.id}"
+            return await connection.fetchval(
+                f"SELECT default_role FROM servers where id = {server_id}"
             )
-            return server.get_role(default_role) if default_role else None
         
 #TODO add permission checks
 async def set_default_role(db_pool, server_id, role_id):
