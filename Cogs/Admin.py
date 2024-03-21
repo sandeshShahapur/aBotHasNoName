@@ -3,6 +3,7 @@ import asyncio, asyncpg
 from discord.ext import commands
 from data.databases.stats.servers import (get_default_role)
 from data.databases.db_management import (update_db, validate_server, flush_db, flush_db_all)
+from utils.datetime import timer
 import json
 import os
 import time
@@ -21,11 +22,29 @@ class Admin(commands.Cog):
             role_ids.append([role.name, role.id])
         with open("data/json/role_ids.json", "w") as f:
             json.dump(role_ids, f)
+
+    @commands.is_owner()
+    @commands.command()
+    async def sync_channels(self, ctx: commands.Context, *args: str):
+        if not args:
+            await ctx.send('No categories specified to sync... Aborting')
+            return
+        
+        categories = [category for category in ctx.guild.categories if category.id in args]
+        if not categories:
+            await ctx.send('No valid categories found... Aborting')
+            return
+        
+        for category in categories:
+            for channel in category.text_channels + category.voice_channels + category.stage_channels:
+                await channel.edit(sync_permissions=True)
+            await ctx.send(f'Permissions synced for category {category.name}...')
+        
     
     
     @commands.is_owner()
     @commands.command()
-    async def clearAllPermissions(self, ctx: commands.Context, *args: str):
+    async def clear_all_permissions(self, ctx: commands.Context, *args: str):
         targets = await self.get_targets(ctx, *args)
         if not targets:
             ctx.send('Aborting, no valid targets found...')
@@ -65,16 +84,20 @@ class Admin(commands.Cog):
 
     #TODO permission checks
     @commands.is_owner()
-    @commands.group()
+    @commands.group(invoke_without_command=False)
     async def lockdown(self, ctx: commands.Context):
+
         if ctx.invoked_subcommand is None:
             #TODO implement default lockdown of context's channel
             await ctx.send('Invalid lockdown command passed...')
 
     @lockdown.command(name="maintainance")
     async def lockdown_maintainance(self, ctx: commands.Context,  *args: str):
-        start_time = time.time()
-        
+        lockdown_file_path = f"data/json/lockdowns/{ctx.guild.name}_lockdown.json"
+        if os.path.exists(lockdown_file_path):
+            await ctx.send('Server is currently in lockdown mode...\n Aborting')
+            return
+
         await ctx.send('Maintainance mode activated...\n All commands are disabled...\n')
         await self.bot.change_presence(status=discord.Status.dnd, activity=discord.Game('Maintainance mode...'))
     
@@ -107,20 +130,17 @@ class Admin(commands.Cog):
 
                     # *lock the channel permission
                     setattr(cur_perms, ld_permission, False)
-                    await channel.set_permissions(target, overwrite=cur_perms)
 
+                await channel.set_permissions(target, overwrite=cur_perms)
                 if json_target["permissions"]:
                     json_channel["targets"].append(json_target)
 
             if json_channel["targets"]:
                 json_data["channels"].append(json_channel)
 
-        with open(f"data/json/lockdowns/{ctx.guild.name}_lockdown.json", "w") as f:
+        with open(f"{lockdown_file_path}", "w") as f:
             json.dump(json_data, f)
         await ctx.send('Lockdown sequence complete...\n\n Good luck when unlocking...')
-
-        end_time = time.time()
-        await ctx.send(f'\nLockdown sequence took {end_time - start_time} seconds to complete...')
 
     @commands.is_owner()
     @commands.group()
@@ -132,8 +152,6 @@ class Admin(commands.Cog):
         
     @unlock.command(name="maintainance")
     async def unlock_maintainance(self, ctx: commands.Context, *args: str):
-        startTime = time.time()
-
         lockdown_file_path = f"data/json/lockdowns/{ctx.guild.name}_lockdown.json"
         if not os.path.exists(lockdown_file_path):
             await ctx.send('No lockdown file found for this server...\n Aborting')
@@ -163,11 +181,11 @@ class Admin(commands.Cog):
                 else:
                     json_permissions = []
 
+                cur_perms = channel.overwrites_for(target)
                 for ld_permission in ld_permissions:
                     if ld_permission not in json_permissions:
-                        cur_perms = channel.overwrites_for(target)
                         setattr(cur_perms, ld_permission, True)
-                        await channel.set_permissions(target, overwrite=cur_perms)
+                await channel.set_permissions(target, overwrite=cur_perms)
 
         await ctx.send('Unlock sequence complete...')
         os.remove(lockdown_file_path)
@@ -175,18 +193,16 @@ class Admin(commands.Cog):
         await self.bot.change_presence(status=discord.Status.online, activity=discord.Game('.help and your mom'))
         await ctx.send("Hoping perms aren't fu*ked.")
 
-        endTime = time.time()
-        await ctx.send(f'\nUnlock sequence took {endTime - startTime} seconds to complete...')
                 
-
+    @commands.command()
     async def get_targets(self, ctx: commands.Context, *args):
         if not args:
-            validate_server(self.bot.db_pool, ctx.guild.id)
+            await validate_server(self.bot.db_pool, ctx.guild)
             default_role = await get_default_role(self.bot.db_pool, ctx.guild.id)
-            targets = ctx.guild.get_role(default_role)
+            targets = [ctx.guild.get_role(int(default_role))]
             if not targets:
                 await ctx.send('Aborting, no default role set for this server...')
-                return None
+            return targets
         else:
             targets = []
             for target in args:

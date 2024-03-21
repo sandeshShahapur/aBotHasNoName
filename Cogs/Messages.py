@@ -27,7 +27,7 @@ class Messages(commands.Cog):
             server_id = message.guild.id
             channel_id = message.channel.id
             user_id = message.author.id
-            datetime = message.created_at.replace(tzinfo=None)
+            datetime = message.created_at
             await log_message(self.bot.db_pool, message_id, server_id, user_id, channel_id, datetime)
 
         # *bump reminder
