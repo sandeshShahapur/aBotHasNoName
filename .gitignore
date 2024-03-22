@@ -62,3 +62,7 @@ data/databases/stats/__pycache__/__init__.cpython-311.pyc
 data/databases/stats/__pycache__/roles.cpython-311.pyc
 data/databases/stats/__pycache__/users.cpython-311.pyc
 data/databases/stats/__pycache__/servers.cpython-311.pyc
+Cogs/__pycache__/Test.cpython-311.pyc
+resources/discordServerInsights.png
+resources/discordServerInsights2.png
+resources/discordServerInsights3.png

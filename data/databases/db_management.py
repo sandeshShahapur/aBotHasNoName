@@ -11,8 +11,7 @@ async def update_db(ctx, db_pool, server):
 
     await ctx.send(f'Setting up {ctx.guild.name}...')
 
-    # .loading all the present users and their roles in the server to the database.
-    await ctx.send(f'Loading users and their roles in {server.name}...')
+    # *loading all the present users and their roles in the server to the database.
     await ctx.send(f'Loading users and their roles in {server.name}...')
     #TODO potential data inconsistency where the bot is removed from the server and a member when removed a role, the bot would not be able to remove the role from the database.
     await set_server(db_pool, server.id)
@@ -23,9 +22,16 @@ async def update_db(ctx, db_pool, server):
 
         server_user = await get_server_user(db_pool, server.id, user.id)
         if server_user:
-            roles = user.roles
-            for role in roles:
-                await set_server_user_role(db_pool, server_user, role.id)
+            cur_roles = [role.id for role in user.roles]
+            db_roles = [record[0] for record in await get_server_user_roles(db_pool, server_user)]
+            surplus_roles = [role for role in db_roles if role not in cur_roles]
+            deficit_roles = [role for role in cur_roles if role not in db_roles]
+
+            for role in surplus_roles:
+                await delete_server_user_role(db_pool, server_user, role)
+            for role in deficit_roles:
+                await set_server_user_role(db_pool, server_user, role)
+            
     await ctx.send(f'{server.name} setup complete!')
 
     end_time = time.time()
