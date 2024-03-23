@@ -13,6 +13,11 @@ class Configs(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
+    async def get_default_role(self, ctx: commands.Context):
+        role_id = await get_default_role(self.bot.db_pool, ctx.guild.id)
+        role = discord.utils.get(ctx.guild.roles, id=role_id) if role_id else None
+        return role
+
     #TODO update the configs displayed, add permission checks
     @commands.is_owner()
     @commands.group()
@@ -20,7 +25,7 @@ class Configs(commands.Cog):
         # .display the current server configurations
         if ctx.invoked_subcommand is None:
             prefix = await get_prefix(self.bot, ctx.message)
-            role = await get_default_role(self.bot.db_pool, ctx.guild.id)
+            role = await self.get_default_role(ctx)
 
             title = "Server Configurations"
             description =   f"**Prefix**: {prefix}\n **Default Role**: {role.name if role else 'None'}"
@@ -31,8 +36,12 @@ class Configs(commands.Cog):
         await validate_server(self.bot.db_pool, server)
 
     @config.command()
-    async def prefix(self, ctx, prefix):
-        await self.common_validation(ctx.guild.id)
+    async def prefix(self, ctx, prefix=None):
+        await self.common_validation(ctx.guild)
+        if not prefix:
+            await ctx.send(f"Current prefix: {await get_prefix(self.bot, ctx.message)}")
+            return
+
         if len(prefix) > 5:
             await ctx.send("Prefix cannot be longer than 5 characters")
         else:
@@ -42,9 +51,13 @@ class Configs(commands.Cog):
     #TODO add permission checks, fix potentioal bug with valid role name being a number
     @config.command()
     async def default_role(self, ctx, role: str = "None"):
-        await self.common_validation(ctx.guild.id)
+        await self.common_validation(ctx.guild)
         if role == "None":
-            await ctx.send("No role provided, please provide a valid role")
+            role = await self.get_default_role(ctx)
+            if not role:
+                await ctx.send("Default role is not set")
+            else:
+                await ctx.send(f"Default role is {role.name}")
             return
 
         roles = ctx.guild.roles

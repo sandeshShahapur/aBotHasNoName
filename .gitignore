@@ -66,3 +66,5 @@ Cogs/__pycache__/Test.cpython-311.pyc
 resources/discordServerInsights.png
 resources/discordServerInsights2.png
 resources/discordServerInsights3.png
+ignore_me.txt
+data/json/backup/__init__.py
