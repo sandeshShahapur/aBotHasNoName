@@ -35,7 +35,7 @@ async def update_db(ctx, db_pool, server):
     await ctx.send(f'{server.name} setup complete!')
 
     end_time = time.time()
-    await ctx.send(f'Setup took {end_time - start_time} seconds to complete...')
+    await ctx.send(f'Setup took {(end_time - start_time):.2f} seconds to complete...')
 
 async def validate_server(db_pool, server):
     server = await get_server(db_pool, server.id)

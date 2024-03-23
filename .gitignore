@@ -67,3 +67,4 @@ resources/discordServerInsights.png
 resources/discordServerInsights2.png
 resources/discordServerInsights3.png
 ignore_me.txt
+data/json/backup/__init__.py

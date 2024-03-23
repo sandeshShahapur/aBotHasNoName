@@ -1,0 +1,300 @@
+{
+  "server_id": 936102218434769008,
+  "channels": [
+    {
+      "channel_id": 936102218900332575,
+      "channel_name": "general",
+      "synced": false,
+      "overwrites": [
+        {
+          "target_id": 1210937012354289724,
+          "permissions": {
+            "connect": false,
+            "create_private_threads": false,
+            "create_public_threads": false,
+            "priority_speaker": false,
+            "send_messages": false,
+            "send_messages_in_threads": false,
+            "use_application_commands": false
+          }
+        }
+      ]
+    },
+    {
+      "channel_id": 1216612550427414619,
+      "channel_name": "test-channel",
+      "synced": false,
+      "overwrites": [
+        {
+          "target_id": 1210937012354289724,
+          "permissions": {
+            "connect": false,
+            "create_private_threads": false,
+            "create_public_threads": false,
+            "priority_speaker": false,
+            "send_messages": false,
+            "send_messages_in_threads": false,
+            "use_application_commands": false
+          }
+        }
+      ]
+    },
+    {
+      "channel_id": 1216612577639927881,
+      "channel_name": "test-channel-2",
+      "synced": false,
+      "overwrites": [
+        {
+          "target_id": 1210937012354289724,
+          "permissions": {
+            "connect": false,
+            "create_private_threads": false,
+            "create_public_threads": false,
+            "priority_speaker": false,
+            "send_messages": false,
+            "send_messages_in_threads": false,
+            "use_application_commands": false
+          }
+        }
+      ]
+    },
+    {
+      "channel_id": 1216612603548270744,
+      "channel_name": "test-channel-3",
+      "synced": false,
+      "overwrites": [
+        {
+          "target_id": 936102218434769008,
+          "permissions": { "send_messages": true }
+        },
+        {
+          "target_id": 1210937012354289724,
+          "permissions": {
+            "connect": false,
+            "create_private_threads": false,
+            "create_public_threads": false,
+            "priority_speaker": false,
+            "send_messages": false,
+            "send_messages_in_threads": false,
+            "use_application_commands": false
+          }
+        }
+      ]
+    },
+    {
+      "channel_id": 1216612687207858196,
+      "channel_name": "test-voice-2",
+      "synced": false,
+      "overwrites": [
+        {
+          "target_id": 1210937012354289724,
+          "permissions": {
+            "connect": false,
+            "create_private_threads": false,
+            "create_public_threads": false,
+            "priority_speaker": false,
+            "send_messages": false,
+            "send_messages_in_threads": false,
+            "use_application_commands": false
+          }
+        }
+      ]
+    },
+    {
+      "channel_id": 1217226564895248445,
+      "channel_name": "john",
+      "synced": false,
+      "overwrites": [
+        {
+          "target_id": 936102218434769008,
+          "permissions": { "read_messages": true, "view_channel": true }
+        },
+        {
+          "target_id": 1217226772152844319,
+          "permissions": {
+            "manage_channels": true,
+            "read_messages": true,
+            "view_channel": true
+          }
+        },
+        {
+          "target_id": 1210937012354289724,
+          "permissions": {
+            "connect": false,
+            "create_private_threads": false,
+            "create_public_threads": false,
+            "priority_speaker": false,
+            "send_messages": false,
+            "send_messages_in_threads": false,
+            "use_application_commands": false
+          }
+        }
+      ]
+    },
+    {
+      "channel_id": 1217226590459527260,
+      "channel_name": "jane",
+      "synced": false,
+      "overwrites": [
+        {
+          "target_id": 936102218434769008,
+          "permissions": { "read_messages": true, "view_channel": true }
+        },
+        {
+          "target_id": 1217226772152844319,
+          "permissions": {
+            "manage_channels": true,
+            "read_messages": true,
+            "view_channel": true
+          }
+        },
+        {
+          "target_id": 1210937012354289724,
+          "permissions": {
+            "connect": false,
+            "create_private_threads": false,
+            "create_public_threads": false,
+            "priority_speaker": false,
+            "send_messages": false,
+            "send_messages_in_threads": false,
+            "use_application_commands": false
+          }
+        }
+      ]
+    },
+    {
+      "channel_id": 1217226613746307242,
+      "channel_name": "doe",
+      "synced": false,
+      "overwrites": [
+        {
+          "target_id": 936102218434769008,
+          "permissions": { "read_messages": true, "view_channel": true }
+        },
+        {
+          "target_id": 1217226772152844319,
+          "permissions": {
+            "manage_channels": true,
+            "read_messages": true,
+            "view_channel": true
+          }
+        },
+        {
+          "target_id": 1210937012354289724,
+          "permissions": {
+            "connect": false,
+            "create_private_threads": false,
+            "create_public_threads": false,
+            "priority_speaker": false,
+            "send_messages": false,
+            "send_messages_in_threads": false,
+            "use_application_commands": false
+          }
+        }
+      ]
+    },
+    {
+      "channel_id": 936102218900332576,
+      "channel_name": "General",
+      "synced": false,
+      "overwrites": [
+        {
+          "target_id": 1210937012354289724,
+          "permissions": {
+            "connect": false,
+            "create_private_threads": false,
+            "create_public_threads": false,
+            "priority_speaker": false,
+            "send_messages": false,
+            "send_messages_in_threads": false,
+            "use_application_commands": false
+          }
+        }
+      ]
+    },
+    {
+      "channel_id": 1216612654559268864,
+      "channel_name": "test voice",
+      "synced": false,
+      "overwrites": [
+        {
+          "target_id": 1210937012354289724,
+          "permissions": {
+            "connect": false,
+            "create_private_threads": false,
+            "create_public_threads": false,
+            "priority_speaker": false,
+            "send_messages": false,
+            "send_messages_in_threads": false,
+            "use_application_commands": false
+          }
+        }
+      ]
+    },
+    {
+      "channel_id": 936102218434769010,
+      "channel_name": "Text channels",
+      "synced": false,
+      "overwrites": [
+        {
+          "target_id": 1210937012354289724,
+          "permissions": {
+            "read_messages": false,
+            "send_messages": false,
+            "view_channel": false
+          }
+        }
+      ]
+    },
+    {
+      "channel_id": 936102218900332574,
+      "channel_name": "Voice channels",
+      "synced": false,
+      "overwrites": [
+        {
+          "target_id": 1210937012354289724,
+          "permissions": {
+            "read_messages": false,
+            "send_messages": false,
+            "view_channel": false
+          }
+        }
+      ]
+    },
+    {
+      "channel_id": 1216612374597861396,
+      "channel_name": "testCategory",
+      "synced": false,
+      "overwrites": [
+        {
+          "target_id": 1210937012354289724,
+          "permissions": {
+            "manage_channels": true,
+            "read_messages": true,
+            "send_messages": true,
+            "view_channel": true
+          }
+        }
+      ]
+    },
+    {
+      "channel_id": 1217226528631558254,
+      "channel_name": "lorem",
+      "synced": false,
+      "overwrites": [
+        {
+          "target_id": 936102218434769008,
+          "permissions": { "read_messages": true, "view_channel": true }
+        },
+        {
+          "target_id": 1217226772152844319,
+          "permissions": {
+            "manage_channels": true,
+            "read_messages": true,
+            "view_channel": true
+          }
+        }
+      ]
+    }
+  ]
+}
