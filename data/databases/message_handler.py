@@ -12,7 +12,7 @@ async def bump(db_pool, server_user):
     async with db_pool.acquire() as connection:
         async with connection.transaction():
             count = await connection.fetchval(
-                f"SELECT counts FROM bumps WHERE server_user_id = {server_user}"
+                f"SELECT count FROM bumps WHERE server_user_id = {server_user}"
             )
             if not count:
                 count = 1
@@ -20,7 +20,7 @@ async def bump(db_pool, server_user):
                 count += 1
             
             await connection.execute(
-                f"INSERT INTO bumps (server_user_id, counts) VALUES ($1, $2) ON CONFLICT (server_user_id) DO UPDATE SET counts = $2",
+                f"INSERT INTO bumps (server_user_id, count) VALUES ($1, $2) ON CONFLICT (server_user_id) DO UPDATE SET count = $2",
                 server_user, count
             )
 

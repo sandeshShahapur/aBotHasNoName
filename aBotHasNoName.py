@@ -28,7 +28,7 @@ import time
 
 import asyncpg
 
-load_dotenv("development.env")
+load_dotenv("main.env")
 class aBotHasNoName(commands.Bot):
     def __init__(
         self,

@@ -115,7 +115,7 @@ class Roles(commands.Cog):
         for role in roles:
             if role in server_roles:
                 await set_server_role_category_role(self.bot.db_pool, server_role_category, role)
-                await ctx.reply(f"Role {role} has been added to the category **{category}**.")
+                await ctx.reply(f"Role {ctx.guild.get_role(role)} has been added to the category **{category}**.")
             else:
                 await ctx.reply(f"Role {role} does not exist in the server.")
 

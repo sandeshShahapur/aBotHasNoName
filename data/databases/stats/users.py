@@ -38,5 +38,5 @@ async def get_top_bumpers(db_pool, server_id):
     async with db_pool.acquire() as connection:
         async with connection.transaction():
             return await connection.fetch(
-                f"SELECT su.user_id, bu.counts from server_users su INNER JOIN bumps bu ON su.server_user_id = bu.server_user_id where su.server_id = {server_id} ORDER BY bu.counts DESC LIMIT 3"
+                f"SELECT su.user_id, bu.count from server_users su INNER JOIN bumps bu ON su.server_user_id = bu.server_user_id where su.server_id = {server_id} ORDER BY bu.count DESC LIMIT 3"
             )

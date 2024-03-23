@@ -119,7 +119,14 @@ class Admin(commands.Cog):
                 await channel.edit(sync_permissions=True)
             await ctx.send(f'Permissions synced for category {category.name}...')
 
-    #* can't use channel.overrites because it returns permissions in enumerish bit values
+    '''can't use channel.overrites because it returns permissions in enumerish bit values.
+    
+       when storing permissions in json, we store only those that are set True or False,
+       otherwise json size would be huge, crashing vs code. when we restore a backup,
+       we set those not present in the json to None, so that they are not set to False/True
+       and if the target is not present in the channel's overwrites, then we set the target's
+       whole overwrite to None.
+    '''
     @commands.is_owner()
     @commands.command()
     async def perms_backup(self, ctx, path=None, *args):
@@ -158,7 +165,9 @@ class Admin(commands.Cog):
                         perm_value = getattr(cur_perms, perm)
                     except AttributeError:
                         continue
-                    json_perms["permissions"][perm] = perm_value
+                    if perm_value == True or perm_value == False:
+                        json_perms["permissions"][perm] = perm_value
+
                 if json_perms["permissions"]:
                     json_channel["overwrites"].append(json_perms)
             if json_channel["overwrites"]:
