@@ -19,12 +19,25 @@ class Admin(commands.Cog):
     '''obtain a server's role name and id as key value pairs and store them in a json file for reference'''
     @commands.is_owner()
     @commands.command()
-    async def json_role_id(self, ctx: commands.Context):
-        role_ids = [[]]
+    async def role_id(self, ctx: commands.Context, json=False):
+        role_ids = []
         for role in ctx.guild.roles:
-            role_ids.append([role.name, role.id])
-        with open("data/json/role_ids.json", "w") as f:
-            json.dump(role_ids, f)
+            role_ids.append([role.id, role.name, "role"])
+        if json == "True" or json == "true":
+            with open("data/json/role_ids.json", "w") as f:
+                json.dump(role_ids, f)
+        return role_ids
+    
+    @commands.is_owner()
+    @commands.command()
+    async def member_id(self, ctx: commands.Context, json=False):
+        member_ids = []
+        for member in ctx.guild.members:
+            member_ids.append([member.id, member.name, "member"])
+        if json == "True" or json == "true":
+            with open("data/json/member_ids.json", "w") as f:
+                json.dump(member_ids, f)
+        return member_ids
             
     
     '''clear all overrites for the specified target(s) in all channels of the server'''
@@ -114,25 +127,38 @@ class Admin(commands.Cog):
         await ctx.send("Taking backup of server's current perms state...")
 
         targets = list(ctx.guild.roles) + list(ctx.guild.members)
-        json_data = {"server_id": ctx.guild.id, "channels": []}
+        json_data = {
+                "server_id": ctx.guild.id,
+                "server_name": ctx.guild.name,
+                "perms": self.permissions,
+                "targets": await self.role_id(ctx) + await self.member_id(ctx),
+                "channels": []
+            }
         for channel in ctx.guild.text_channels + ctx.guild.voice_channels + ctx.guild.stage_channels + ctx.guild.categories:
-            json_channel = {"channel_id": channel.id, "channel_name": channel.name}
+            json_channel = {
+                        "channel_id": channel.id,
+                        "channel_name": channel.name,
+                        "channel_type": "text" if isinstance(channel, discord.TextChannel) else "voice" if isinstance(channel, discord.VoiceChannel) else "stage" if isinstance(channel, discord.StageChannel) else "category"
+                    }
             if channel.permissions_synced:
-                json_channel["synced"] = channel.category_id
+                json_channel["synced"] = [channel.category_id, channel.category.name]
             else:
                 json_channel["synced"] = False
 
             json_channel["overwrites"] = []
             for target in targets:
                 cur_perms = channel.overwrites_for(target)
-                json_perms = {"target_id": target.id, "permissions": {}}
+                json_perms = {
+                        "target_id": target.id,
+                        "target_name": target.name,
+                        "permissions": {}
+                    }
                 for perm in self.permissions:
                     try:
                         perm_value = getattr(cur_perms, perm)
                     except AttributeError:
                         continue
-                    if perm_value == True or perm_value == False:
-                        json_perms["permissions"][perm] = perm_value
+                    json_perms["permissions"][perm] = perm_value
                 if json_perms["permissions"]:
                     json_channel["overwrites"].append(json_perms)
             if json_channel["overwrites"]:
@@ -221,6 +247,7 @@ class Admin(commands.Cog):
         for channel in ctx.guild.text_channels + ctx.guild.voice_channels + ctx.guild.stage_channels + ctx.guild.categories: #TODO make this abstract
             if channel.permissions_synced:
                 continue
+            everyone_perms = channel.overwrites_for(ctx.guild.default_role)
 
             json_channel = {
                         "channel_id": channel.id,
@@ -235,7 +262,8 @@ class Admin(commands.Cog):
                         "permissions": {}
                     }
 
-                if getattr(cur_perms, "view_channel") == False:
+                # *if the target's channel is private and the target can't view the channel, or if the target can't view the channel regardless of it's channel being private, then skip the target
+                if getattr(cur_perms, "view_channel") == False or (getattr(everyone_perms, "view_channel") == False and getattr(cur_perms, "view_channel") == None):
                     continue
 
                 for ld_permission in self.ld_permissions:
@@ -279,8 +307,6 @@ class Admin(commands.Cog):
             return
         
         await ctx.send('Terminating maintainance lockdown...')
-        ld_permissions = json_data["ld_permissions"]
-        targets = [ctx.guild.get_role(target) or ctx.guild.get_member(target) for target in json_data["targets"]]
         await ctx.send('Unlocking channels...')
 
         json_channels = json_data["channels"]
