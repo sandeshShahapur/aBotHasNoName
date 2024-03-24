@@ -2,13 +2,13 @@ import asyncio
 import discord
 from discord.ext import commands
 from datetime import datetime
-from data.databases.stats.servers import get_server, set_server
+from data.databases.servers import get_server, set_server
 from data.databases.stats.users import (
                                     get_top_users,
                                     get_top_bumpers
                                 )
 from data.databases.stats.channels import get_top_channels
-from data.databases.stats.roles import (
+from data.databases.roles import (
                                 get_server_role_category_id, 
                                 get_roles_in_category,
                                 get_role_count,

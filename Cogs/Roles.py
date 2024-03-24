@@ -2,8 +2,8 @@ import asyncio
 import discord
 from discord.ext import commands
 from datetime import datetime
-from data.databases.stats.servers import get_server
-from data.databases.stats.roles import (
+from data.databases.servers import get_server
+from data.databases.roles import (
                                 get_server_role_categories, 
                                 get_server_role_category_id, 
                                 get_roles_in_category,

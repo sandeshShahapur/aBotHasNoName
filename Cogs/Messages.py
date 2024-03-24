@@ -3,8 +3,8 @@ import asyncio
 from discord.ext import commands
 from data.databases.message_handler import log_message, bump
 from utils.datetime import convert_utc_to_ist
-from data.databases.stats.servers import set_server
-from data.databases.stats.users import (
+from data.databases.servers import set_server
+from data.databases.users import (
                                     set_user, 
                                     set_server_user, 
                                     get_server_user

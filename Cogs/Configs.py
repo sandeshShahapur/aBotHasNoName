@@ -1,7 +1,7 @@
 import discord
 import asyncio
 from discord.ext import commands
-from data.databases.stats.servers import (get_prefix, 
+from data.databases.servers import (get_prefix, 
                                           set_prefix, 
                                           get_default_role, 
                                           set_default_role 

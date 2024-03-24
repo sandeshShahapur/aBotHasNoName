@@ -2,7 +2,7 @@ async def log_message(db_pool, message_id, server_id, user_id, channel_id, datet
     async with db_pool.acquire() as connection:
         async with connection.transaction():
             await connection.execute(
-                f"INSERT INTO messages_main (message_id, server_id, user_id, channel_id, datetime) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (message_id) DO NOTHING",
+                f"INSERT INTO messages (message_id, server_id, user_id, channel_id, datetime) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (message_id) DO NOTHING",
                 message_id, server_id, user_id, channel_id, datetime
             )
             #todo add logging to file

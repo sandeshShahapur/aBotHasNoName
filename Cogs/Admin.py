@@ -1,7 +1,7 @@
 import discord
 import asyncio, asyncpg
 from discord.ext import commands
-from data.databases.stats.servers import (get_default_role)
+from data.databases.servers import (get_default_role)
 from data.databases.db_management import (update_db, validate_server, flush_db, flush_db_all)
 from utils.datetime import timer
 import json

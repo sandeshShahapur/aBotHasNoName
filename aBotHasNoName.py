@@ -8,16 +8,16 @@ import json
 from dotenv import load_dotenv
 import logging, logging.handlers
 from typing import List, Optional
-from data.databases.stats.servers import ( 
+from data.databases.servers import ( 
                                         set_server,
                                         get_prefix
                                     )
-from data.databases.stats.users import ( 
+from data.databases.users import ( 
                                     set_user,
                                     set_server_user,
                                     get_server_user,    #! anytime you use this, if not present, set it; must validate.
                                 )
-from data.databases.stats.roles import (
+from data.databases.roles import (
                                 get_server_user_roles,
                                 set_server_user_role,
                                 delete_server_user_role,
@@ -28,7 +28,7 @@ import time
 
 import asyncpg
 
-load_dotenv("main.env")
+load_dotenv("development.env")
 class aBotHasNoName(commands.Bot):
     def __init__(
         self,

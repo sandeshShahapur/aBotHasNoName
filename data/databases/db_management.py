@@ -1,7 +1,7 @@
 import discord
-from data.databases.stats.users import get_user, set_user, set_server_user, get_server_user
-from data.databases.stats.servers import get_server, set_server
-from data.databases.stats.roles import get_server_user_roles, delete_server_user_role, set_server_user_role, set_role_category, get_server_role_category_id
+from data.databases.users import get_user, set_user, set_server_user, get_server_user
+from data.databases.servers import get_server, set_server
+from data.databases.roles import get_server_user_roles, delete_server_user_role, set_server_user_role, set_role_category, get_server_role_category_id
 import time
 
 # *update and validata data in db
@@ -10,9 +10,7 @@ async def update_db(ctx, db_pool, server):
     start_time = time.time()
 
     await ctx.send(f'Setting up {ctx.guild.name}...')
-
-    # *loading all the present users and their roles in the server to the database.
-    await ctx.send(f'Loading users and their roles in {server.name}...')
+    await ctx.send(f'Loading users and their roles')
     #TODO potential data inconsistency where the bot is removed from the server and a member when removed a role, the bot would not be able to remove the role from the database.
     await set_server(db_pool, server.id)
     users = server.members
@@ -31,6 +29,11 @@ async def update_db(ctx, db_pool, server):
                 await delete_server_user_role(db_pool, server_user, role)
             for role in deficit_roles:
                 await set_server_user_role(db_pool, server_user, role)
+    await ctx.send(f'Users and their roles loaded')
+
+    await ctx.send(f'Loading invites')
+    invites = await server.invites()
+
             
     await ctx.send(f'{server.name} setup complete!')
 
