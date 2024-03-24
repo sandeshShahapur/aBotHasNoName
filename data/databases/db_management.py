@@ -14,6 +14,8 @@ async def update_db(ctx, db_pool, server):
     #TODO potential data inconsistency where the bot is removed from the server and a member when removed a role, the bot would not be able to remove the role from the database.
     await set_server(db_pool, server.id)
     users = server.members
+
+    count = 0
     for user in users:
         await set_user(db_pool, user.id)
         await set_server_user(db_pool, server.id, user.id)
@@ -24,12 +26,13 @@ async def update_db(ctx, db_pool, server):
             db_roles = [record[0] for record in await get_server_user_roles(db_pool, server_user)]
             surplus_roles = [role for role in db_roles if role not in cur_roles]
             deficit_roles = [role for role in cur_roles if role not in db_roles]
+            count += len(surplus_roles) + len(deficit_roles)
 
             for role in surplus_roles:
                 await delete_server_user_role(db_pool, server_user, role)
             for role in deficit_roles:
                 await set_server_user_role(db_pool, server_user, role)
-    await ctx.send(f'Users and their roles loaded')
+    await ctx.send(f'Users and their roles loaded. {count} roles updated.')
 
     await ctx.send(f'Loading invites')
     invites = await server.invites()
