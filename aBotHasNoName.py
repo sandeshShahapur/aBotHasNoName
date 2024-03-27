@@ -62,8 +62,8 @@ class aBotHasNoName(commands.Bot):
         handler.setFormatter(formatter)
         logger.addHandler(handler)
 
-        
-        db_pool = await asyncpg.create_pool(dsn=os.getenv('DATABASE_URL'), min_size=16, max_size=32)
+        dsn = os.getenv('PROD_DATABASE_URL') if os.getenv('PROD') == 'True' else os.getenv('DEV_DATABASE_URL')
+        db_pool = await asyncpg.create_pool(dsn=dsn, min_size=16, max_size=32)
         self.db_pool = db_pool
 
         # .loading extensions
@@ -116,6 +116,7 @@ class aBotHasNoName(commands.Bot):
             await set_server_user(self.db_pool, member.guild.id, member.id)
 
     async def on_member_join(self, member: discord.Member) -> None:
+        pass
         
 
     # !Should not remove user from database, as it would remove all the roles the user has in all the servers.
@@ -134,10 +135,9 @@ class aBotHasNoName(commands.Bot):
         # *add/remove the roles that have been added/removed
         await update_user_roles(self.db_pool, after.guild, before, after)
         
-    # *next thiing to do goes here*
     async def on_invite_create(self, invite: discord.Invite) -> None:
-        server_user = await validate_user(self.db_pool, invite.guild, invite.inviter.id, validate_server=True)
-        await set_invite(self.db_pool, invite.id, invite.created_at, server_user[0], invite.uses)
+        server_user = await validate_user(self.db_pool, invite.guild, invite.inviter.id, validate_server_flag=True)
+        await set_invite(self.db_pool, invite.code, server_user[0], invite.uses, invite.created_at)
 
     # *should not remove invite from database as we want to track retention percentage of the users
     async def on_invite_delete(self, invite: discord.Invite) -> None:
@@ -173,9 +173,9 @@ def main() -> None:
 
     load_dotenv()
     if os.getenv('PROD') == 'True':
-        bot.run(os.getenv('TOKEN_PROD'))
+        bot.run(os.getenv('PROD_TOKEN'))
     else:
-        bot.run(os.getenv('TOKEN_DEV')) #run bot
+        bot.run(os.getenv('DEV_TOKEN')) #run bot
 
 if __name__ == '__main__':
     main()

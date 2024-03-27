@@ -19,15 +19,20 @@ async def update_db(ctx, db_pool, server):
     #TODO potential data inconsistency where the bot is removed from the server and a member when removed a role, the bot would not be able to remove the role from the database.
     await set_server(db_pool, server.id)
     users = server.members
+
+    count = 0
     for user in users:
         await set_user(db_pool, user.id)
         await set_server_user(db_pool, server.id, user.id)
 
         server_user = await get_server_user(db_pool, server.id, user.id)
         if server_user:
-            await sync_user_roles(db_pool, user)
+            count += await sync_user_roles(db_pool, user)
         else:
             await ctx.send(f'Failed to load {user.name}')
+    await ctx.send(f'**{count}** roles synced')
+
+    await set_user(db_pool, -1)
     await set_server_user(db_pool, server.id, -1) #for invaild users
     await ctx.send(f'Users and their roles loaded')
 
@@ -37,7 +42,7 @@ async def update_db(ctx, db_pool, server):
             server_user = await validate_user(db_pool, server, invite.inviter.id)
         else:
             server_user = await validate_user(db_pool, server, -1)
-        await set_invite(db_pool, invite.code, invite.created_at, server_user[0], invite.uses)
+        await set_invite(db_pool, invite.code, server_user[0], invite.uses, invite.created_at)
 
             
     await ctx.send(f'{server.name} setup complete!')
@@ -54,9 +59,13 @@ async def update_db(ctx, db_pool, server):
 async def validate_server(db_pool, server):
     if not (await get_server(db_pool, server.id)):
         await update_db(db_pool, server)
-        
-async def validate_user(db_pool, server, user_id, validate_server=False):
-    if validate_server:
+
+''' conditionally validate server.
+    if the user was already in our database, it is likely that is user is synced in our database with the server.
+    if the user was not in our database, then the user is not synced in our database with the server.
+'''
+async def validate_user(db_pool, server, user_id, validate_server_flag=False):
+    if validate_server_flag:
         await validate_server(db_pool, server)
 
     is_synced = True
@@ -69,7 +78,7 @@ async def validate_user(db_pool, server, user_id, validate_server=False):
     return [await get_server_user(db_pool, server.id, user_id), is_synced]
 
 async def update_user_roles(db_pool, server, before, after):
-    server_user = await validate_user(db_pool, server, after.id, validate_server=True)
+    server_user = await validate_user(db_pool, server, after.id, validate_server_flag=True)
 
     if not server_user[0]:
         print(f'Error: User {after.name} not found in database.')
@@ -89,24 +98,28 @@ async def update_user_roles(db_pool, server, before, after):
         await set_server_user_role(db_pool, server_user[0], role)
 
 async def sync_user_roles(db_pool, user: Optional[discord.Member], validate=False):
-    if not validate:
-        server_user = await validate_user(db_pool, user.guild, user.id, validate_server=True)
+    if validate:
+        server_user = await validate_user(db_pool, user.guild, user.id, validate_server_flag=True)
     else:
         server_user = [await get_server_user(db_pool, user.guild.id, user.id), False]
 
     if not server_user[0]:
         print(f'Error: User {user.name} not found in database.')
-        return
+        return 0
     
-    roles = [role.id for role in user.roles]
-    roles_in_db = [role['role_id'] for role in await get_server_user_roles(db_pool, server_user[0])]
+    cur_roles = [role.id for role in user.roles]
+    db_roles = [role['role_id'] for role in await get_server_user_roles(db_pool, server_user[0])]
 
-    for role in roles:
-        if role not in roles_in_db:
-            await set_server_user_role(db_pool, server_user[0], role)
-    for role in roles_in_db:
-        if role not in roles:
-            await delete_server_user_role(db_pool, server_user[0], role)
+    count = 0
+    for cur_role in cur_roles:
+        if cur_role not in db_roles:
+            await set_server_user_role(db_pool, server_user[0], cur_role)
+            count += 1
+    for db_role in db_roles:
+        if db_role not in cur_roles:
+            await delete_server_user_role(db_pool, server_user[0], db_role)
+            count += 1
+    return count
         
 
 

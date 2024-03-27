@@ -19,22 +19,22 @@ class Admin(commands.Cog):
     '''obtain a server's role name and id as key value pairs and store them in a json file for reference'''
     @commands.is_owner()
     @commands.command()
-    async def role_id(self, ctx: commands.Context, json=False):
+    async def role_id(self, ctx: commands.Context, json_output: bool =False):
         role_ids = []
         for role in ctx.guild.roles:
             role_ids.append([role.id, role.name, "role"])
-        if json == "True" or json == "true":
+        if json_output:
             with open("data/json/role_ids.json", "w") as f:
                 json.dump(role_ids, f)
         return role_ids
     
     @commands.is_owner()
     @commands.command()
-    async def member_id(self, ctx: commands.Context, json=False):
+    async def member_id(self, ctx: commands.Context, json_output: bool =False):
         member_ids = []
         for member in ctx.guild.members:
             member_ids.append([member.id, member.name, "member"])
-        if json == "True" or json == "true":
+        if json_output:
             with open("data/json/member_ids.json", "w") as f:
                 json.dump(member_ids, f)
         return member_ids

@@ -46,3 +46,4 @@ async def delete_invite(db_pool, invite_code):
                 f"DELETE FROM invites WHERE code = $1",
                 invite_code
             )
+
