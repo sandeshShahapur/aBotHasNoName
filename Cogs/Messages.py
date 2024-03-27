@@ -27,21 +27,22 @@ class Messages(commands.Cog):
             server_id = message.guild.id
             channel_id = message.channel.id
             user_id = message.author.id
-            datetime = message.created_at
-            await log_message(self.bot.db_pool, message_id, server_id, user_id, channel_id, datetime)
+            sent_at = message.created_at
+            await log_message(self.bot.db_pool, message_id, server_id, user_id, channel_id, sent_at)
 
         # *bump reminder
         disboard = 302050872383242240
         if message.embeds and message.author.id == disboard and message.embeds[0].description.startswith('Bump done!'):
-            bumper = message.interaction.user
-            server_user = await validate_user(self.bot.db_pool, message.guild, bumper.id) #we recquire valid server_user
-            count = await bump(self.bot.db_pool, server_user)
+            if message.interaction:
+                bumper = message.interaction.user
+                server_user = await validate_user(self.bot.db_pool, message.guild, bumper.id, validate_server=True) #we recquire valid server_user
+                count = await bump(self.bot.db_pool, server_user[0])
 
-            # ?should i not use sleep here because resetting bot will lose the reminder?
-            await message.channel.send(f'Thank you for bumping our server for the {count}th time!\n We will remind you in two hours to bump again.\n {bumper.mention}')
-            reminder = await create_embed('It is time to bump the server again!', 'Bump our server by typing /bump!', color=discord.Color.green(), timestamp=True)
-            await asyncio.sleep(7200)
-            await message.channel.send(f'{bumper.mention}', embed=reminder)
+                # ?should i not use sleep here because resetting bot will lose the reminder?
+                await message.channel.send(f'Thank you for bumping our server for the {count}th time!\n We will remind you in two hours to bump again.\n {bumper.mention}')
+                reminder = await create_embed('It is time to bump the server again!', 'Bump our server by typing /bump!', color=discord.Color.green(), timestamp=True)
+                await asyncio.sleep(7200)
+                await message.channel.send(f'{bumper.mention}', embed=reminder)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Messages(bot)) 

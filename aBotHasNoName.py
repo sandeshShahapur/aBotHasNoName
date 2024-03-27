@@ -16,6 +16,7 @@ from data.databases.users import (
                                     set_user,
                                     set_server_user,
                                     get_server_user,    #! anytime you use this, if not present, set it; must validate.
+                                    set_invite
                                 )
 from data.databases.roles import (
                                 get_server_user_roles,
@@ -23,12 +24,15 @@ from data.databases.roles import (
                                 delete_server_user_role,
                                 delete_role
                             )
-from data.databases.db_management import validate_user, update_user_roles, update_db
+from data.databases.db_management import (
+                                validate_server,
+                                validate_user,
+                                update_user_roles,
+                                sync_user_roles,
+                                update_db
+                            )
 import time
-
 import asyncpg
-
-load_dotenv("development.env")
 class aBotHasNoName(commands.Bot):
     def __init__(
         self,
@@ -97,6 +101,7 @@ class aBotHasNoName(commands.Bot):
         pass
 
     async def on_member_join(self, member: discord.Member) -> None:
+        await validate_server(self.db_pool, member.guild)
         await set_user(self.db_pool, member.id)
         
         #.if the user has rejoined the server, then add the roles the user had before leaving the server.'''
@@ -110,6 +115,9 @@ class aBotHasNoName(commands.Bot):
         else:
             await set_server_user(self.db_pool, member.guild.id, member.id)
 
+    async def on_member_join(self, member: discord.Member) -> None:
+        
+
     # !Should not remove user from database, as it would remove all the roles the user has in all the servers.
     # *This method is only called if the user is present in internal cache.
     async def on_member_remove(self, member: discord.Member) -> None:
@@ -119,15 +127,21 @@ class aBotHasNoName(commands.Bot):
     # *This method is called instead of on_member_remove if the user is not in internal cache.
     async def on_raw_member_remove(self, payload: discord.RawMemberRemoveEvent) -> None:
         if isinstance(payload.user, discord.Member):
-            await update_user_roles(self.db_pool, payload.user)
+            await sync_user_roles(self.db_pool, payload.user, validate=True)
 
     async def on_member_update(self, before: discord.Member, after: discord.Member) -> None:
     # *role updates*
-        # ?should i validate all the roles of the user in db or should i only add/remove the roles that have been added/removed?
-        # *validating all the roles of the user in db
-        await update_user_roles(self.db_pool, after)
+        # *add/remove the roles that have been added/removed
+        await update_user_roles(self.db_pool, after.guild, before, after)
         
     # *next thiing to do goes here*
+    async def on_invite_create(self, invite: discord.Invite) -> None:
+        server_user = await validate_user(self.db_pool, invite.guild, invite.inviter.id, validate_server=True)
+        await set_invite(self.db_pool, invite.id, invite.created_at, server_user[0], invite.uses)
+
+    # *should not remove invite from database as we want to track retention percentage of the users
+    async def on_invite_delete(self, invite: discord.Invite) -> None:
+        pass
             
 
     async def on_guild_role_delete(self, role: discord.Role) -> None:
@@ -155,8 +169,13 @@ def main() -> None:
         intents=intents,
         description=description,
         owner_id=owner_id
-    ) 
-    bot.run(os.getenv('TOKEN')) #run bot
+    )
+
+    load_dotenv()
+    if os.getenv('PROD') == 'True':
+        bot.run(os.getenv('TOKEN_PROD'))
+    else:
+        bot.run(os.getenv('TOKEN_DEV')) #run bot
 
 if __name__ == '__main__':
     main()
