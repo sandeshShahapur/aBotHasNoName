@@ -68,3 +68,10 @@ resources/discordServerInsights2.png
 resources/discordServerInsights3.png
 ignore_me.txt
 data/json/backup/__init__.py
+Cogs/__pycache__/Subtest.cpython-311.pyc
+Cogs/Plugins/__pycache__/__init__.cpython-311.pyc
+Cogs/Plugins/__pycache__/invites_tracking.cpython-311.pyc
+Cogs/test/__pycache__/Subtest.cpython-311.pyc
+Cogs/test/__pycache__/__init__.cpython-311.pyc
+data/databases/__pycache__/roles.cpython-311.pyc
+data/databases/__pycache__/users.cpython-311.pyc

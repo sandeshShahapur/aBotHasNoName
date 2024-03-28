@@ -7,9 +7,9 @@ def convert_utc_to_ist(datetime_utc):
 
 def timer(func):
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    async def wrapper(self, *args, **kwargs):
         start_time = time.time()
-        func(*args, **kwargs)
+        ctx = await func(self, *args, **kwargs)
         end_time = time.time()
-        print(f"Time taken for {func.__name__}: {end_time - start_time}")
-    return func
+        await ctx.send(f"{func.__name__} took {(end_time - start_time):.2f} seconds to complete.")
+    return wrapper

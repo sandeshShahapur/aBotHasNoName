@@ -31,13 +31,14 @@ class Configs(commands.Cog):
             description =   f"**Prefix**: {prefix}\n **Default Role**: {role.name if role else 'None'}"
             embed = discord.Embed(title=title, description=description, color=discord.Color.blue())
             await ctx.send(embed=embed)
-        
-    async def common_validation(self, server):
+    
+    # *validate the server before accessing any configs
+    async def validation(self, server):
         await validate_server(self.bot.db_pool, server)
 
     @config.command()
     async def prefix(self, ctx, prefix=None):
-        await self.common_validation(ctx.guild)
+        await self.validation(ctx.guild)
         if not prefix:
             await ctx.send(f"Current prefix: {await get_prefix(self.bot, ctx.message)}")
             return
@@ -51,7 +52,7 @@ class Configs(commands.Cog):
     #TODO add permission checks, fix potentioal bug with valid role name being a number
     @config.command()
     async def default_role(self, ctx, role: str = "None"):
-        await self.common_validation(ctx.guild)
+        await self.validation(ctx.guild)
         if role == "None":
             role = await self.get_default_role(ctx)
             if not role:
