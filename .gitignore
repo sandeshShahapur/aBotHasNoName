@@ -75,3 +75,6 @@ Cogs/test/__pycache__/Subtest.cpython-311.pyc
 Cogs/test/__pycache__/__init__.cpython-311.pyc
 data/databases/__pycache__/roles.cpython-311.pyc
 data/databases/__pycache__/users.cpython-311.pyc
+data/data_visualisations/__pycache__/__init__.cpython-311.pyc
+data/data_visualisations/graph_templates/__pycache__/pie_chart.cpython-311.pyc
+data/data_visualisations/graph_templates/__pycache__/__init__.cpython-311.pyc

@@ -38,6 +38,21 @@ class Admin(commands.Cog):
             with open("data/json/member_ids.json", "w") as f:
                 json.dump(member_ids, f)
         return member_ids
+
+
+    async def amendPermsAllCategories(self, server, targets, amends, syncChannels):
+        if server:
+            for category in server.categories: # Edit permissions for targets in the category
+                for target in targets:
+                    await category.set_permissions(target, **amends)
+
+            # Optionally sync channels with their category
+            if syncChannels:
+                for channel in category.channels:
+                    await channel.edit(sync_permissions=True)
+            print('Permissions amended.')
+        else:
+            print('server not found.')
             
     
     '''clear all overrites for the specified target(s) in all channels of the server'''
