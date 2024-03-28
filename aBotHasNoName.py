@@ -8,7 +8,7 @@ import json
 from dotenv import load_dotenv
 import logging, logging.handlers
 from typing import List, Optional
-from data.databases.servers import ( 
+from data.databases.servers import (
                                         set_server,
                                         get_prefix
                                     )
@@ -36,6 +36,9 @@ from data.databases.db_management import (
 import time
 import asyncpg
 class aBotHasNoName(commands.Bot):
+    db_pool: Optional[asyncpg.pool.Pool] = None
+    initial_extensions: List[str] = []
+
     def __init__(
         self,
         *args,
@@ -43,7 +46,7 @@ class aBotHasNoName(commands.Bot):
         **kwargs
     ):
         super().__init__(*args, **kwargs)
-        self.initial_extensions = initial_extensions
+        aBotHasNoName.initial_extensions = initial_extensions
 
     # .all bot settings and configurations should be done here.
     async def setup_hook(self) -> None:
@@ -66,10 +69,10 @@ class aBotHasNoName(commands.Bot):
 
         dsn = os.getenv('PROD_DATABASE_URL') if os.getenv('PROD') == 'True' else os.getenv('DEV_DATABASE_URL')
         db_pool = await asyncpg.create_pool(dsn=dsn, min_size=16, max_size=32)
-        self.db_pool = db_pool
+        aBotHasNoName.db_pool = db_pool
 
         # .loading extensions
-        for extension in self.initial_extensions:
+        for extension in aBotHasNoName.initial_extensions:
             try:
                 await self.load_extension(extension)
                 print(f"Loaded extension: {extension}")
@@ -96,26 +99,26 @@ class aBotHasNoName(commands.Bot):
     #TODO practically, would require permissions checks.
     #TODO add exception handling    
     async def on_guild_join(self, guild: discord.Guild) -> None:
-        await update_db(self.db_pool, guild)
+        await update_db(aBotHasNoName.db_pool, guild)
 
     # !should not remove server from database, as it would remove all the users and their roles from the server.
     async def on_guild_remove(self, guild: discord.Guild) -> None:
         pass
 
     async def on_member_join(self, member: discord.Member) -> None:
-        await validate_server(self.db_pool, member.guild)
-        await set_user(self.db_pool, member.id)
+        await validate_server(aBotHasNoName.db_pool, member.guild)
+        await set_user(aBotHasNoName.db_pool, member.id)
         
         #.if the user has rejoined the server, then add the roles the user had before leaving the server.'''
-        rejoined = await get_server_user(self.db_pool, member.guild.id, member.id)
+        rejoined = await get_server_user(aBotHasNoName.db_pool, member.guild.id, member.id)
         if rejoined:
             guild_roles = member.guild.roles
-            previous_member_roles_record = await get_server_user_roles(self.db_pool, rejoined)
+            previous_member_roles_record = await get_server_user_roles(aBotHasNoName.db_pool, rejoined)
             previous_member_roles_id = [record['role_id'] for record in previous_member_roles_record]
             previous_member_roles = [role for role in guild_roles if role.id in previous_member_roles_id]
             await member.add_roles(*previous_member_roles, atomic=False)
         else:
-            await set_server_user(self.db_pool, member.guild.id, member.id)
+            await set_server_user(aBotHasNoName.db_pool, member.guild.id, member.id)
         
 
     # !Should not remove user from database, as it would remove all the roles the user has in all the servers.
@@ -127,16 +130,16 @@ class aBotHasNoName(commands.Bot):
     # *This method is called instead of on_member_remove if the user is not in internal cache.
     async def on_raw_member_remove(self, payload: discord.RawMemberRemoveEvent) -> None:
         if isinstance(payload.user, discord.Member):
-            await sync_user_roles(self.db_pool, payload.user, validate=True)
+            await sync_user_roles(aBotHasNoName.db_pool, payload.user, validate=True)
 
     async def on_member_update(self, before: discord.Member, after: discord.Member) -> None:
     # *role updates*
         # *add/remove the roles that have been added/removed
-        await update_user_roles(self.db_pool, after.guild, before, after)
+        await update_user_roles(aBotHasNoName.db_pool, after.guild, before, after)
         
     async def on_invite_create(self, invite: discord.Invite) -> None:
-        server_user = await validate_user(self.db_pool, invite.guild, invite.inviter.id, validate_server_flag=True)
-        await set_invite(self.db_pool, invite.code, server_user[0], invite.uses, invite.created_at)
+        server_user = await validate_user(aBotHasNoName.db_pool, invite.guild, invite.inviter.id, validate_server_flag=True)
+        await set_invite(aBotHasNoName.db_pool, invite.code, server_user[0], invite.uses, invite.created_at)
 
     # *should not remove invite from database as we want to track retention percentage of the users
     async def on_invite_delete(self, invite: discord.Invite) -> None:
@@ -144,13 +147,13 @@ class aBotHasNoName(commands.Bot):
             
 
     async def on_guild_role_delete(self, role: discord.Role) -> None:
-        await delete_role(self.db_pool, role.id)
+        await delete_role(aBotHasNoName.db_pool, role.id)
         #TODO also do for role categories
 
     async def close(self) -> None:
         await super().close()
         print(f'{self.user} has logged out of and exited Discord!')
-        await self.db_pool.close()
+        await aBotHasNoName.db_pool.close()
 
         
 def main() -> None:
