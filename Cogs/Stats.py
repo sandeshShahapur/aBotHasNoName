@@ -1,7 +1,6 @@
 import asyncio
 import discord
 from discord.ext import commands
-from datetime import datetime
 from data.databases.servers import get_server, set_server
 from data.databases.stats.users import (
                                     get_top_users,
@@ -15,7 +14,16 @@ from data.databases.roles import (
                                 get_categories_of_role
                             )
 from data.databases.db_management import update_db
+from data.data_visualisations.graph_templates.pie_chart import standard_pie_chart
+
+from utils.embeds import create_embed
+from datetime import datetime
+
+import plotly.express as px
+import pandas as pd
+
 from typing import Optional, Union
+import os
 
 
 class Stats(commands.Cog):
@@ -61,24 +69,39 @@ class Stats(commands.Cog):
             await ctx.send(message)
 
     '''''''''''''''''ROLES STATS'''''''''''''''''''''
+    async def validate_category(self, ctx, category):
+        if not category.isdigit():
+            return await get_server_role_category_id(self.bot.db_pool, ctx.guild.id, category)
+        else:
+            return False
+        
+    async def validate_role(self, ctx, role):
+        if role.isdigit():
+            server_roles = [server_role.id for server_role in ctx.guild.roles]
+            return int(role) if int(role) in server_roles else False
+        else:
+            return False
+
     @stats.group(invoke_without_command=False, name="roles")
-    async def stats_roles(self, ctx, category: Optional[str], role: Optional[str]):
+    async def stats_roles(self, ctx, *args):
          # *assumning at most only one category and role is passed for now
         if ctx.invoked_subcommand is None:
             prison, sussy_baka = 953341678746480690, 1079122386995122236
-            if category:
-                if not category.isdigit():
-                    category_id = await get_server_role_category_id(self.bot.db_pool, ctx.guild.id, category)
+            category, role = None, None
+            for arg in args:
+                key_value = arg.split("=")
+                if key_value[0] == "category":
+                    category = key_value[1]
+                    category_id = await self.validate_category(ctx, category)
                     if not category_id:
-                        await ctx.reply(f"Role category {category} does not exist.")
+                        await ctx.reply(f"Category {key_value[1]} does not exist.")
                         return
-                else:
-                    role = int(category)
-            if role:
-                server_roles = [server_role.id for server_role in ctx.guild.roles]
-                if not role.isdigit() or int(role) not in server_roles:
-                    await ctx.reply(f"Role {role} does not exist in server")
-                    return
+
+                elif key_value[0] == "role":
+                    role = await self.validate_role(ctx, key_value[1])
+                    if not role:
+                        await ctx.reply(f"Role {key_value[1]} does not exist.")
+                        return
             
             # *if both a role and category are passed
             if category and role:
@@ -86,19 +109,27 @@ class Stats(commands.Cog):
 
             # *if only a category is passed
             elif category:
+                category_roles = [record["role_id"] for record in await get_roles_in_category(self.bot.db_pool, category_id)]
+                if not category_roles:
+                    await ctx.reply(f"Category **{category}** does not have any roles.")
+                    return
+                
+                category_role_names = []
+                category_role_counts = []
+                for role in category_roles:
+                    category_role_names.append(ctx.guild.get_role(role).name)
+                    category_role_counts.append(await get_role_count(self.bot.db_pool, role))
 
-                category_roles = [record["role_id"] for record in await get_roles_in_category(self.bot.db_pool, category_id)] 
-                category_role_count = 0
-                role_counts = []
-                for i, role in enumerate(category_roles):
-                    role_counts.append(await get_role_count(self.bot.db_pool, role))
-                    category_role_count += role_counts[i]
-                role_percentages = [(role_counts[i] / category_role_count) * 100 for i in range(len(category_roles))]
+                # *create a pie chart and save it as an image
+                filename = f'{ctx.guild.id}_{category}_roles_distribution.png'
+                path = 'data/data_visualisations/stats_graphs'
+                await standard_pie_chart(values=category_role_counts, names=category_role_names, title=None, path=path, filename=filename)
+                
+                file = discord.File(path+filename, filename=filename)
+                embed = await create_embed(title=f"Roles demographics in {category}", image_url=f"attachment://" + filename, footer=f"{self.bot.user.name} • Asked by {ctx.author.name}", footer_icon_url=self.bot.user.avatar.url, timestamp=True)
+                await ctx.send(file=file, embed=embed)
 
-                message = f"Roles in category **{category}** are:\n"
-                for i, role in enumerate(category_roles):
-                    message += f"- Role **{ctx.guild.get_role(role).name}** has **{role_counts[i]}** members, which is **{role_percentages[i]:.{2}f}%** of the members.\n"
-                await ctx.send(message)
+                os.remove(path+filename)
 
             # *if only a role is passed
             elif role:
@@ -123,6 +154,7 @@ class Stats(commands.Cog):
                 message = f"Server {ctx.guild.name} has:\n **{member_count}** members\n **{server_roles_count}** roles \n **{average_role_count:.{2}f}** average roles per member\n\n **{prison_count}** members are in prison\n **{sussy_baka_count}** sussy bakas = **{sussy_baka_count/member_count*100:.{2}f}%** of members have not assigned themselves a role."
                 await ctx.send(message)
 
+    #TODO pie chart of this role vs all other roles in the category
     async def stats_of_role_in_category(self, ctx, category, role):
         category_id = await get_server_role_category_id(self.bot.db_pool, ctx.guild.id, category)
         category_roles = [record["role_id"] for record in await get_roles_in_category(self.bot.db_pool, category_id)] 
@@ -131,10 +163,10 @@ class Stats(commands.Cog):
             return
             
         role_count = await get_role_count(self.bot.db_pool, role)
-        category_role_count = 0
+        total_role_counts = 0
         for rolz in category_roles:
-            category_role_count += await get_role_count(self.bot.db_pool, rolz)
-        role_percentage = (role_count / category_role_count) * 100
+            total_role_counts += await get_role_count(self.bot.db_pool, rolz)
+        role_percentage = (role_count / total_role_counts) * 100
 
         await ctx.send(f"- Role **{ctx.guild.get_role(int(role)).name}** has **{role_count}** members in category **{category}**, which is **{role_percentage:.{2}f}%** of the members.\n")
 

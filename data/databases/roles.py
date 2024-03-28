@@ -54,6 +54,13 @@ async def set_server_role_category_id(db_pool, server_id, category):
                 server_id, category
             )
 
+async def set_server_role_category_name(db_pool, server_role_category_id, category):
+    async with db_pool.acquire() as connection:
+        async with connection.transaction():
+            await connection.execute(
+                f"UPDATE server_role_categories SET role_category_name = '{category}' WHERE id = {server_role_category_id}"
+            )
+
 async def get_server_role_categories(db_pool, server_id):
     async with db_pool.acquire() as connection:
         async with connection.transaction():

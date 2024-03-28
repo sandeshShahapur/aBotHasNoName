@@ -13,7 +13,8 @@ from data.databases.roles import (
                                 delete_server_role_category_id,
                                 delete_role_category,
                                 set_server_role_category_role,
-                                delete_server_role_category_role
+                                delete_server_role_category_role,
+                                set_server_role_category_name
                             )
 from data.databases.db_management import update_db
 from typing import Union, Optional
@@ -36,22 +37,31 @@ class Roles(commands.Cog):
 
     '''''''''''''''''ROLES CATEGORY'''''''''''''''''''''
     async def server_category_exists(self, ctx, category, error_message="Category does not exist."):
-        server_role_category_id = await get_server_role_category_id(self.bot.db_pool, ctx.guild.id, category)
-        if not server_role_category_id:
-            await ctx.reply(error_message)
-            return False
-        return True
+        return await get_server_role_category_id(self.bot.db_pool, ctx.guild.id, category)
 
     @roles.group(name="categories", invoke_without_command=True)
     async def categories(self, ctx, category: Optional[str], role: Optional[str]):
         
         if ctx.invoked_subcommand is None:
-            await ctx.reply("im inside main categories")
             if category:
                 if await self.server_category_exists(ctx, category):
                     await ctx.reply("server category exists")
                     message = await self.display_categories_message(ctx, [category])
                     await ctx.reply(message)
+
+    @categories.command(name="rename")
+    async def rename(self, ctx, category, new_category):
+        if not category or not new_category:
+            await ctx.reply("Please specify the category and the new category name.")
+            return
+
+        if await self.server_category_exists(ctx, category):
+            await set_role_category(self.bot.db_pool, new_category)
+            server_role_category_id = await get_server_role_category_id(self.bot.db_pool, ctx.guild.id, category)
+            await set_server_role_category_name(self.bot.db_pool, server_role_category_id, new_category)
+            await ctx.reply(f"Category {category} has been renamed to {new_category}.")
+        else:
+            await ctx.reply(f"Category {category} does not exist.")
 
     @categories.command(name="ls")
     async def ls(self, ctx):
@@ -71,11 +81,11 @@ class Roles(commands.Cog):
     async def display_categories_message(self, ctx, categories):
         message = "The categories are:"
         for i, category in enumerate(categories):
-            message += f"\n \t{i+1}. **{category}**\n"
+            message += f"\n \t{i+1}. **{category}**"
             category_id = await get_server_role_category_id(self.bot.db_pool, ctx.guild.id, category)
             roles = await get_roles_in_category(self.bot.db_pool, category_id)
             for role in roles:
-                message += f"\n- {ctx.guild.get_role(role[0]).name}"
+                message += f"\n| {ctx.guild.get_role(role[0]).name}"
             message += "\n"
         return message
 

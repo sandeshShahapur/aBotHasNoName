@@ -38,11 +38,27 @@ class Admin(commands.Cog):
             with open("data/json/member_ids.json", "w") as f:
                 json.dump(member_ids, f)
         return member_ids
+
+
+    async def amendPermsAllCategories(self, server, targets, amends, syncChannels):
+        if server:
+            for category in server.categories: # Edit permissions for targets in the category
+                for target in targets:
+                    await category.set_permissions(target, **amends)
+
+            # Optionally sync channels with their category
+            if syncChannels:
+                for channel in category.channels:
+                    await channel.edit(sync_permissions=True)
+            print('Permissions amended.')
+        else:
+            print('server not found.')
             
     
     '''clear all overrites for the specified target(s) in all channels of the server'''
     @commands.is_owner()
     @commands.command()
+    @timer
     async def clear_all_permissions(self, ctx: commands.Context, *args: str):
         targets = await self.get_targets(ctx, *args)
         if not targets:
@@ -54,9 +70,12 @@ class Admin(commands.Cog):
                 await channel.set_permissions(target, overwrite=None)
         await ctx.send('Permissions cleared...')
 
+        return ctx
+
     '''amend permissions for the specified channel(s) for the specified target(s) with the specified permissions'''
     @commands.is_owner()
     @commands.command()
+    @timer
     async def amend_permissions(self, ctx: commands.Context, *args: str):
         async def set_perms(ctx: commands.Context, channel: discord.TextChannel):
             for target in targets:
@@ -94,11 +113,14 @@ class Admin(commands.Cog):
         for category in categories:
             for channel in category.text_channels + category.voice_channels + category.stage_channels:
                 await set_perms(ctx, channel)
+        
+        return ctx
 
 
     '''sync permissions for the channel(s) of the specified categorie(s)'''
     @commands.is_owner()
     @commands.command()
+    @timer
     async def sync_channels(self, ctx: commands.Context, *args: str):
         if not args:
             await ctx.send('No categories specified to sync... Aborting')
@@ -119,6 +141,8 @@ class Admin(commands.Cog):
                 await channel.edit(sync_permissions=True)
             await ctx.send(f'Permissions synced for category {category.name}...')
 
+        return ctx
+
     '''can't use channel.overrites because it returns permissions in enumerish bit values.
     
        when storing permissions in json, we store only those that are set True or False,
@@ -129,6 +153,7 @@ class Admin(commands.Cog):
     '''
     @commands.is_owner()
     @commands.command()
+    @timer
     async def perms_backup(self, ctx, path=None, *args):
         backup_file_path = path or f"data/json/backup/{ctx.guild.name}_perms_backup.json"
         await ctx.send("Taking backup of server's current perms state...")
@@ -176,6 +201,7 @@ class Admin(commands.Cog):
         with open(f"{backup_file_path}", "w") as f:
             json.dump(json_data, f)
         await ctx.send("Backup complete...")
+        return ctx
 
 
     @commands.is_owner()
@@ -186,9 +212,11 @@ class Admin(commands.Cog):
 
     '''sync the server's database with the server's current state'''
     @databases.command()
+    @timer
     async def sync_server(self, ctx: commands.Context):
         await update_db(ctx, self.bot.db_pool, ctx.guild)
         await ctx.send('Server sync complete...')
+        return ctx
 
     # !incomplete, not important, not urgent. careful when implementing
     @databases.command()
@@ -222,6 +250,7 @@ class Admin(commands.Cog):
     we can retain the permissions when the server is unlocked
     '''
     @lockdown.command(name="maintainance")
+    @timer
     async def lockdown_maintainance(self, ctx: commands.Context,  perms_backup=False, *args: str):
         if perms_backup == 'True' or perms_backup == 'true':
             backup_file_path = f"data/json/lockdowns/{ctx.guild.name}_perms_backup_maintainance_lockdown.json"
@@ -292,6 +321,7 @@ class Admin(commands.Cog):
         with open(f"{lockdown_file_path}", "w") as f:
             json.dump(json_data, f)
         await ctx.send('Lockdown sequence complete...\n\n Good luck when unlocking...')
+        return ctx
 
 
     @commands.is_owner()
@@ -303,6 +333,7 @@ class Admin(commands.Cog):
 
     '''terminate the maintainance lockdown and unlock the server'''
     @unlock.command(name="maintainance")
+    @timer
     async def unlock_maintainance(self, ctx: commands.Context, *args: str):
         lockdown_file_path = f"data/json/lockdowns/{ctx.guild.name}_lockdown.json"
         if not os.path.exists(lockdown_file_path):
@@ -356,6 +387,7 @@ class Admin(commands.Cog):
         await ctx.send('Maintainance lockdown terminated...')
         await self.bot.change_presence(status=discord.Status.online, activity=discord.Game('.help and your mom'))
         await ctx.send("Hoping perms aren't fu*ked.")
+        return ctx
 
                 
     @commands.command()

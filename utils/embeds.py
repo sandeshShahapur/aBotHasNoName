@@ -2,9 +2,8 @@ import discord
 import asyncio
 
 async def create_embed(
-    title: str,
-    description: str,
-    /,
+    title: str = None,
+    description: str = None,
     type: str = 'rich',
     color: discord.Color = discord.Color.blurple(),
     url: str = None,
