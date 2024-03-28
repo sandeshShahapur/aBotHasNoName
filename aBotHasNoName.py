@@ -16,8 +16,10 @@ from data.databases.users import (
                                     set_user,
                                     set_server_user,
                                     get_server_user,    #! anytime you use this, if not present, set it; must validate.
-                                    set_invite
                                 )
+from Cogs.Plugins.invites_tracking import (
+                                    set_invite
+)
 from data.databases.roles import (
                                 get_server_user_roles,
                                 set_server_user_role,
@@ -114,9 +116,6 @@ class aBotHasNoName(commands.Bot):
             await member.add_roles(*previous_member_roles, atomic=False)
         else:
             await set_server_user(self.db_pool, member.guild.id, member.id)
-
-    async def on_member_join(self, member: discord.Member) -> None:
-        pass
         
 
     # !Should not remove user from database, as it would remove all the roles the user has in all the servers.
@@ -160,7 +159,7 @@ def main() -> None:
         owner_id = config['owner_id']
 
     intents = discord.Intents.all() #intent basically allows a bot to subscribe to specific buckets of events
-    initial_extensions = ['Cogs.Stats', 'Cogs.Messages', 'Cogs.Configs', 'Cogs.Admin', 'Cogs.Roles','Cogs.Test']
+    initial_extensions = ['Cogs.Stats', 'Cogs.Messages', 'Cogs.Configs', 'Cogs.Admin', 'Cogs.Roles', 'Cogs.Test']
     description = '''A bot that has no name'''
 
     bot = aBotHasNoName(
@@ -172,7 +171,7 @@ def main() -> None:
     )
 
     load_dotenv()
-    if os.getenv('PROD') == 'True':
+    if os.getenv('PROD') == 'true':
         bot.run(os.getenv('PROD_TOKEN'))
     else:
         bot.run(os.getenv('DEV_TOKEN')) #run bot

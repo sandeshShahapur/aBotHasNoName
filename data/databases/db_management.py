@@ -2,7 +2,9 @@ import discord
 from data.databases.users import get_user, set_user, set_server_user, get_server_user
 from data.databases.servers import get_server, set_server
 from data.databases.roles import get_server_user_roles, delete_server_user_role, set_server_user_role, set_role_category, get_server_role_category_id
-from data.databases.users import set_invite
+from Cogs.Plugins.invites_tracking import (
+                                    set_invite
+)
 from typing import Optional
 import time
 
@@ -12,8 +14,6 @@ import time
    database for a server is made to be in ideal state.
 '''
 async def update_db(ctx, db_pool, server):
-    start_time = time.time()
-
     await ctx.send(f'Setting up {ctx.guild.name}...')
     await ctx.send(f'Loading users and their roles')
     #TODO potential data inconsistency where the bot is removed from the server and a member when removed a role, the bot would not be able to remove the role from the database.
@@ -43,12 +43,9 @@ async def update_db(ctx, db_pool, server):
         else:
             server_user = await validate_user(db_pool, server, -1)
         await set_invite(db_pool, invite.code, server_user[0], invite.uses, invite.created_at)
-
             
     await ctx.send(f'{server.name} setup complete!')
-
-    end_time = time.time()
-    await ctx.send(f'Setup took {(end_time - start_time):.2f} seconds to complete...')
+    return ctx
 
 
 '''validations
