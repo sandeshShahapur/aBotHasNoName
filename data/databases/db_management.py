@@ -1,8 +1,37 @@
 import discord
-from data.databases.users import get_user, set_user, set_server_user, get_server_user
-from data.databases.servers import get_server, set_server
-from data.databases.roles import get_server_user_roles, delete_server_user_role, set_server_user_role, set_role_category, get_server_role_category_id
-from Cogs.Plugins.invites_tracking import (
+from data.databases.users import (
+                            set_user, 
+                            set_server_user, 
+                            get_server_user
+                        )
+from data.databases.servers import (
+                            get_server,
+                            set_server
+                        )
+from data.databases.roles import (
+                        get_server_user_roles,
+                        delete_server_user_role,
+                        set_server_user_role
+                    )
+from data.databases.plugins import (
+                        get_plugin_config_template,
+                        get_plugins,
+                        get_server_plugin_config,
+                        get_subplugin_config_template,
+                        get_subplugins,
+                        set_server_plugin_config,
+                        set_server_subplugin_config,
+)
+                        
+from data.databases.plugins import (
+                        get_plugins,
+                        get_subplugins,
+                        set_server_plugin,
+                        get_server_plugin,
+                        set_server_subplugin,
+                        get_server_subplugin
+                    )
+from Cogs.Plugins.Invites import (
                                     set_invite
 )
 from typing import Optional
@@ -36,13 +65,19 @@ async def update_db(ctx, db_pool, server):
     await set_server_user(db_pool, server.id, -1) #for invaild users
     await ctx.send(f'Users and their roles loaded')
 
-    await ctx.send(f'Loading invites')
-    for invite in await server.invites():
-        if invite.inviter:
-            server_user = await validate_user(db_pool, server, invite.inviter.id)
-        else:
-            server_user = await validate_user(db_pool, server, -1)
-        await set_invite(db_pool, invite.code, server_user[0], invite.uses, invite.created_at)
+    await ctx.send(f'Loding plugins and their subplugins')
+    for plugin in await get_plugins(db_pool):
+        await validate_server_plugin(db_pool, server, plugin['name'])
+
+    for subplugin in await get_subplugins(db_pool):
+        #TODO validate subplugin
+        await set_server_subplugin(db_pool, server.id, subplugin['name'])
+
+        subplugin_config = await get_subplugin_config_template(db_pool, subplugin['name'])
+        if subplugin_config:
+            server_subplugin = await get_server_subplugin(db_pool, server.id, subplugin['name'])
+            await set_server_subplugin_config(db_pool, server_subplugin["id"], subplugin_config)
+    await ctx.send(f'Plugins and their subplugins loaded')
             
     await ctx.send(f'{server.name} setup complete!')
     return ctx
@@ -56,6 +91,27 @@ async def update_db(ctx, db_pool, server):
 async def validate_server(db_pool, server):
     if not (await get_server(db_pool, server.id)):
         await update_db(db_pool, server)
+        return False
+    return True
+
+#TODO optimise this
+async def validate_server_plugin(db_pool, server, plugin, validate_server_flag=False):
+    if validate_server_flag:
+        await validate_server(db_pool, server)
+
+    server_plugin = await get_server_plugin(db_pool, server.id, plugin)
+    if not server_plugin:
+        await set_server_plugin(db_pool, server.id, plugin)
+        server_plugin = await get_server_plugin(db_pool, server.id, plugin)
+
+    server_plugin_config = await get_server_plugin_config(db_pool, server_plugin['id'])
+    if not server_plugin_config:
+        plugin_config = await get_plugin_config_template(db_pool, plugin)
+        if plugin_config:
+            await set_server_plugin_config(db_pool, server_plugin['id'], plugin_config)
+            server_plugin_config = await get_server_plugin_config(db_pool, server_plugin['id'])
+    
+    return server_plugin
 
 ''' conditionally validate server.
     if the user was already in our database, it is likely that is user is synced in our database with the server.

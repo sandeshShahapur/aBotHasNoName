@@ -78,3 +78,7 @@ data/databases/__pycache__/users.cpython-311.pyc
 data/data_visualisations/__pycache__/__init__.cpython-311.pyc
 data/data_visualisations/graph_templates/__pycache__/pie_chart.cpython-311.pyc
 data/data_visualisations/graph_templates/__pycache__/__init__.cpython-311.pyc
+Cogs/Plugins/__pycache__/Bumper.cpython-311.pyc
+Cogs/Plugins/__pycache__/Invites.cpython-311.pyc
+Cogs/Plugins/__pycache__/Plugin.cpython-311.pyc
+data/databases/__pycache__/plugins.cpython-311.pyc

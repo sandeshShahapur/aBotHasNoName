@@ -1,7 +1,7 @@
 import discord
 import asyncio
 from discord.ext import commands
-from data.databases.message_handler import log_message, bump
+from data.databases.message_handler import log_message
 from utils.datetime import convert_utc_to_ist
 from data.databases.servers import set_server
 from data.databases.users import (
@@ -30,19 +30,6 @@ class Messages(commands.Cog):
             sent_at = message.created_at
             await log_message(self.bot.db_pool, message_id, server_id, user_id, channel_id, sent_at)
 
-        # *bump reminder
-        disboard = 302050872383242240
-        if message.embeds and message.author.id == disboard and message.embeds[0].description.startswith('Bump done!'):
-            if message.interaction:
-                bumper = message.interaction.user
-                server_user = await validate_user(self.bot.db_pool, message.guild, bumper.id, validate_server_flag=True) #we recquire valid server_user
-                count = await bump(self.bot.db_pool, server_user[0])
-
-                # ?should i not use sleep here because resetting bot will lose the reminder?
-                await message.channel.send(f'Thank you for bumping our server for the {count}th time!\n We will remind you in two hours to bump again.\n {bumper.mention}')
-                reminder = await create_embed('It is time to bump the server again!', 'Bump our server by typing /bump!', color=discord.Color.green(), timestamp=True)
-                await asyncio.sleep(7200)
-                await message.channel.send(f'{bumper.mention}', embed=reminder)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Messages(bot)) 

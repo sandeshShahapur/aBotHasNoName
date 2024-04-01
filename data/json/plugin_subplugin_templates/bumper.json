@@ -1,0 +1,24 @@
+{
+    "server_id": null,
+
+    "reminder": {
+        "enabled": false,
+        "channel_id": null,
+        "bump_message": "Thank you {user_mention} for bumping our server! We will remind you in two hours to bump again.\n",
+        "to_ping": null,
+        "reminder_message": "{to_ping_mention} It is time to bump the server again!', 'Bump our server by typing /bump!'"
+    },
+
+    "bump_miss_reminder": {
+        "enabled": false,
+        "channel_id": null,
+        "interval": 600,
+        "to_ping": null,
+        "message": "{to_ping_mention} Woops! It seems like you missed bumping our server! Please bump again to support us!"
+    },
+
+    "counter": {
+        "enabled": false,
+        "bump_message": "We have been bumped **{count}** times and your contribution is **{contribution_pct}%**! Thank you for your support!"
+    }
+}

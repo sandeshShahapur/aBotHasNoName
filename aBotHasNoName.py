@@ -17,7 +17,7 @@ from data.databases.users import (
                                     set_server_user,
                                     get_server_user,    #! anytime you use this, if not present, set it; must validate.
                                 )
-from Cogs.Plugins.invites_tracking import (
+from Cogs.Plugins.Invites import (
                                     set_invite
 )
 from data.databases.roles import (
@@ -162,7 +162,7 @@ def main() -> None:
         owner_id = config['owner_id']
 
     intents = discord.Intents.all() #intent basically allows a bot to subscribe to specific buckets of events
-    initial_extensions = ['Cogs.Stats', 'Cogs.Messages', 'Cogs.Configs', 'Cogs.Admin', 'Cogs.Roles', 'Cogs.Test']
+    initial_extensions = ['Cogs.Stats', 'Cogs.Messages', 'Cogs.Configs', 'Cogs.Admin', 'Cogs.Roles', 'Cogs.Plugins.Plugin', 'Cogs.Plugins.Invites', 'Cogs.Plugins.Bumper']
     description = '''A bot that has no name'''
 
     bot = aBotHasNoName(
