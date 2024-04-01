@@ -3,7 +3,7 @@ import asyncio, asyncpg
 from discord.ext import commands
 from data.databases.servers import (get_default_role)
 from data.databases.db_management import (update_db, validate_server, flush_db, flush_db_all)
-from utils.datetime import timer
+from utils.decorators import timer
 import json
 import os
 import time

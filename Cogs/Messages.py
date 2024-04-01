@@ -2,7 +2,7 @@ import discord
 import asyncio
 from discord.ext import commands
 from data.databases.message_handler import log_message
-from utils.datetime import convert_utc_to_ist
+from utils.decorators import convert_utc_to_ist
 from data.databases.servers import set_server
 from data.databases.users import (
                                     set_user, 
