@@ -17,7 +17,7 @@ from data.databases.users import (
                                     set_server_user,
                                     get_server_user,    #! anytime you use this, if not present, set it; must validate.
                                 )
-from Cogs.Plugins.invites_tracking import (
+from Cogs.Plugins.Invites import (
                                     set_invite
 )
 from data.databases.roles import (
@@ -67,8 +67,15 @@ class aBotHasNoName(commands.Bot):
         handler.setFormatter(formatter)
         logger.addHandler(handler)
 
+        async def init_connection(connection):
+            await connection.set_type_codec(
+                    'json',
+                    encoder=json.dumps,
+                    decoder=json.loads,
+                    schema='pg_catalog'
+                )
         dsn = os.getenv('PROD_DATABASE_URL') if os.getenv('PROD') == 'True' else os.getenv('DEV_DATABASE_URL')
-        db_pool = await asyncpg.create_pool(dsn=dsn, min_size=16, max_size=32)
+        db_pool = await asyncpg.create_pool(dsn=dsn, min_size=16, max_size=32, init=init_connection)
         aBotHasNoName.db_pool = db_pool
 
         # .loading extensions
@@ -162,7 +169,7 @@ def main() -> None:
         owner_id = config['owner_id']
 
     intents = discord.Intents.all() #intent basically allows a bot to subscribe to specific buckets of events
-    initial_extensions = ['Cogs.Stats', 'Cogs.Messages', 'Cogs.Configs', 'Cogs.Admin', 'Cogs.Roles', 'Cogs.Test']
+    initial_extensions = ['Cogs.Stats', 'Cogs.Messages', 'Cogs.Configs', 'Cogs.Admin', 'Cogs.Roles', 'Cogs.Plugins.Plugin', 'Cogs.Plugins.Invites', 'Cogs.Plugins.Bumper']
     description = '''A bot that has no name'''
 
     bot = aBotHasNoName(

@@ -52,8 +52,8 @@ class Roles(commands.Cog):
     @categories.command(name="rename")
     async def rename(self, ctx, category, new_category):
         if not category or not new_category:
-            await ctx.reply("Please specify the category and the new category name.")
-            return
+            return await ctx.reply("Please specify the category and the new category name.")
+            
 
         if await self.server_category_exists(ctx, category):
             await set_role_category(self.bot.db_pool, new_category)
@@ -67,8 +67,8 @@ class Roles(commands.Cog):
     async def ls(self, ctx):
         categories = await get_server_role_categories(self.bot.db_pool, ctx.guild.id)
         if not categories:
-            await ctx.reply("No categories found.")
-            return
+            return await ctx.reply("No categories found.")
+            
         else:
             categories = [category[0] for category in categories]
             message = await self.display_categories_message(ctx, categories)
@@ -92,8 +92,8 @@ class Roles(commands.Cog):
     @categories.command(name="create")
     async def create(self, ctx, category, *roles):
         if await get_server_role_category_id(self.bot.db_pool, ctx.guild.id, category):
-            await ctx.reply("Category already exists.")
-            return
+            return await ctx.reply("Category already exists.")
+            
 
         await set_role_category(self.bot.db_pool, category)
         await set_server_role_category_id(self.bot.db_pool, ctx.guild.id, category)
