@@ -116,9 +116,11 @@ class Stats(commands.Cog):
                 
                 category_role_names = []
                 category_role_counts = []
+                sum_role_counts = 0
                 for role in category_roles:
                     category_role_names.append(ctx.guild.get_role(role).name)
                     category_role_counts.append(await get_role_count(self.bot.db_pool, role))
+                    sum_role_counts += category_role_counts[-1]
 
                 # *create a pie chart and save it as an image
                 filename = f'{ctx.guild.id}_{category}_roles_distribution.png'
@@ -126,7 +128,8 @@ class Stats(commands.Cog):
                 await standard_pie_chart(values=category_role_counts, names=category_role_names, title=None, path=path, filename=filename)
                 
                 file = discord.File(path+filename, filename=filename)
-                embed = await create_embed(title=f"Roles demographics in {category}", image_url=f"attachment://" + filename, footer=f"{self.bot.user.name} • Asked by {ctx.author.name}", footer_icon_url=self.bot.user.avatar.url, timestamp=True)
+                # *assumes each member has atmost one role in the category
+                embed = await create_embed(title=f"Roles demographics in {category}", description=f'Sum total role assigns are **{sum_role_counts}**\n **{100-round(sum_role_counts/ctx.guild.member_count*100,2)}%** of members are unassigned', image_url=f"attachment://" + filename, footer=f"{self.bot.user.name} • Asked by {ctx.author.name}", footer_icon_url=self.bot.user.avatar.url, timestamp=True)
                 await ctx.send(file=file, embed=embed)
 
                 os.remove(path+filename)

@@ -177,7 +177,7 @@ class Bumper(commands.Cog):
     '''''''''''''''''''''''''''''''''ON BUMP EVENT'''''''''''''''''''''''''''''''''''
     @commands.Cog.listener('on_message')
     async def bump(self, message):
-        if message.author.bot:
+        if message.author == self.bot.user:
             return
         
         server_plugin = None
@@ -216,7 +216,7 @@ class Bumper(commands.Cog):
                         await bump_counts(self.bot.db_pool, server_user[0])
                         server_bcount = await get_server_bump_count(self.bot.db_pool, bumper_config['server_id'])
                         user_bcount = await get_server_user_bump_count(self.bot.db_pool, server_user[0])
-                        msg += bumper_config["counter"]["bump_message"].format(count=server_bcount, contribution_pct=round(server_bcount/user_bcount*100, 2))
+                        msg += bumper_config["counter"]["bump_message"].format(count=server_bcount, contribution_pct=round(user_bcount/server_bcount*100, 2))
 
                 if msg:
                     await message.channel.send(msg)
