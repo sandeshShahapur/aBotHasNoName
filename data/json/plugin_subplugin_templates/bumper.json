@@ -6,7 +6,7 @@
         "channel_id": null,
         "bump_message": "Thank you {user_mention} for bumping our server! We will remind you in two hours to bump again.\n",
         "to_ping": null,
-        "reminder_message": "{to_ping_mention} It is time to bump the server again!', 'Bump our server by typing /bump!'"
+        "reminder_message": "{to_ping_mention} It is time to bump the server again! Bump our server by typing /bump!'"
     },
 
     "miss_reminder": {
@@ -14,7 +14,7 @@
         "channel_id": null,
         "interval": 600,
         "to_ping": null,
-        "message": "{to_ping_mention} Woops! It seems like you missed bumping our server! Please bump again to support us!"
+        "message": "Woops! It seems like our previous bumper missed bumping our server! {to_ping_mention} Please bump again to support us!"
     },
 
     "counter": {

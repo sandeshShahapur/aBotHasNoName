@@ -22,7 +22,7 @@ from data.databases.plugins import (
 from data.databases.servers import set_server
 
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from utils.decorators import tolower
 
@@ -98,6 +98,7 @@ class Bumper(commands.Cog):
 
 
     '''''''''''''''''''''''''''''''''MODULES COMMANDS'''''''''''''''''''''''''''''''''''
+    #! commands that take input only work for slash commonds currently
     @commands.is_owner()
     @bumper.group()
     async def reminder(self, ctx: commands.Context):
@@ -115,16 +116,16 @@ class Bumper(commands.Cog):
 
     @commands.is_owner()
     @reminder.command(name='set_config')
-    async def breminder_set_config(self, ctx: commands.Context, channel: discord.TextChannel, to_ping: discord.Role, bump_message: str):
+    #! to_ping being default None will remove a ping role from the configuration. thus must provide a none value to remove the role. also provide the same for channel.
+    async def breminder_set_config(self, ctx: commands.Context, channel: discord.TextChannel = None, to_ping: discord.Role = None):
         #TODO implement DRY
         server_plugin = await validate_server_plugin(self.bot.db_pool, ctx.guild, 'bumper', validate_server_flag=True)
         if not server_plugin:
             self.bot.logger.error(f'Error: Plugin bumper for Server {ctx.guild.name} ({ctx.guild.id}) not found in database.')
 
         server_config = await get_server_plugin_config(self.bot.db_pool, server_plugin['id'])
-        server_config['reminder']['channel_id'] = channel.id
-        server_config['reminder']['to_ping_id'] = to_ping.id
-        server_config['reminder']['bump_message'] = bump_message
+        server_config['reminder']['channel_id'] = channel.id if channel else server_config['reminder']['channel_id']
+        server_config['reminder']['to_ping'] = to_ping.id if to_ping else server_config['reminder']['to_ping']
         await set_server_plugin_config(self.bot.db_pool, server_plugin['id'], server_config)
         await ctx.send('Configuration has been set.')
 
@@ -145,15 +146,15 @@ class Bumper(commands.Cog):
 
     @commands.is_owner()
     @bump_miss_reminder.command(name='set_config')
-    async def bmiss_reminder_set_config(self, ctx: commands.Context, channel: discord.TextChannel, interval: int, to_ping: discord.Role):
+    async def bmiss_reminder_set_config(self, ctx: commands.Context, channel: discord.TextChannel = None, interval: int = None, to_ping: discord.Role = None):
         server_plugin = await validate_server_plugin(self.bot.db_pool, ctx.guild, 'bumper', validate_server_flag=True)
         if not server_plugin:
             self.bot.logger.error(f'Error: Plugin bumper for Server {ctx.guild.name} ({ctx.guild.id}) not found in database.')
 
         server_config = await get_server_plugin_config(self.bot.db_pool, server_plugin['id'])
-        server_config['miss_reminder']['channel_id'] = channel.id
-        server_config['miss_reminder']['interval'] = interval
-        server_config['miss_reminder']['to_ping_id'] = to_ping.id
+        server_config['miss_reminder']['channel_id'] = channel.id if channel else server_config['miss_reminder']['channel_id']
+        server_config['miss_reminder']['interval'] = interval + 7200 if interval else server_config['miss_reminder']['interval']
+        server_config['miss_reminder']['to_ping'] = to_ping.id if to_ping else server_config['miss_reminder']['to_ping']
         await set_server_plugin_config(self.bot.db_pool, server_plugin['id'], server_config)
         await ctx.send('Configuration has been set.')
 
@@ -200,13 +201,13 @@ class Bumper(commands.Cog):
                     
 
                 user = message.interaction.user
-                server_user = await validate_user(self.bot.db_pool, message.guild, user.id, validate_server_flag=False) #we recquire valid server_user
+                server_user = await validate_user(self.bot.db_pool, message.guild, user.id, validate_server_flag=True)
 
-                message = ""
+                msg = ""
                 if bumper_config["reminder"]["enabled"]:
-                    should_miss_remind = True if bumper_config["missed_missed_reminder"]["enabled"] else False
-                    await bump(self.bot.db_pool, message.guild.id, user.id, message.channel.id, message.created_at, True, should_miss_remind);
-                    message += bumper_config["reminder"]["bump_message"].format(user_mention=user.mention) + "\n"
+                    should_miss_remind = True if bumper_config["miss_reminder"]["enabled"] else False
+                    await bump(self.bot.db_pool, message.guild.id, user.id, message.channel.id, message.created_at, True, should_miss_remind)
+                    msg += bumper_config["reminder"]["bump_message"].format(user_mention=user.mention) + "\n"
 
                 if bumper_config["counter"]["enabled"]:
                     if not server_user[0]:
@@ -215,10 +216,10 @@ class Bumper(commands.Cog):
                         await bump_counts(self.bot.db_pool, server_user[0])
                         server_bcount = await get_server_bump_count(self.bot.db_pool, bumper_config['server_id'])
                         user_bcount = await get_server_user_bump_count(self.bot.db_pool, server_user[0])
-                        message += bumper_config["counter"]["bump_message"].format(count=server_bcount, contribution_pct=round(server_bcount/user_bcount*100, 2))
+                        msg += bumper_config["counter"]["bump_message"].format(count=server_bcount, contribution_pct=round(server_bcount/user_bcount*100, 2))
 
-                if message:
-                    await message.channel.send(message)
+                if msg:
+                    await message.channel.send(msg)
 
     '''''''''''''''''''''''''''''''''BUMP REMINDER'''''''''''''''''''''''''''''''''''
     #TODO make efficient by considering only the servers that are in our bump database
@@ -244,14 +245,15 @@ class Bumper(commands.Cog):
 
                 if (    not previous_bump or 
                         not previous_bump[module_remind] or 
-                        previous_bump['bumped_at'] + timedelta(seconds=bumper_config[module].get("interval", 7200)) > datetime.now()
+                        previous_bump['bumped_at'] + timedelta(seconds=bumper_config[module].get("interval", 7200)) > datetime.now(timezone.utc)
                     ):
                     continue
 
                 channel = guild.get_channel(bumper_config[module]["channel_id"]) or guild.get_channel(previous_bump['channel_id'])
                 to_ping = guild.get_role(bumper_config[module]["to_ping"]) or guild.get_member(previous_bump['user_id'])
                 to_ping_mention = to_ping.mention if to_ping else "Unkown Role/Member"
-                reminder_message = bumper_config[module]["reminder_message"].format(to_ping_mention=to_ping_mention)
+                module_reminder = "reminder_message" if module == "reminder" else "message"
+                reminder_message = bumper_config[module][module_reminder].format(to_ping_mention=to_ping_mention)
 
                 if channel:
                     await channel.send(reminder_message)

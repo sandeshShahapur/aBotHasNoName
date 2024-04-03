@@ -113,7 +113,8 @@ async def bump(db_pool, server_id, user_id, channel_id, bumped_at, should_remind
     async with db_pool.acquire() as connection:
         async with connection.transaction():
             await connection.execute(
-                'INSERT INTO bumps (server_id, user_id, channel_id, bumped_at) VALUES ($1, $2, $3, $4, $5, $6) on CONFLICT DO NOTHING',
+                'INSERT INTO bumps (server_id, user_id, channel_id, bumped_at, should_remind, should_miss_remind) VALUES ($1, $2, $3, $4, $5, $6)'
+                + ' ON CONFLICT (server_id) DO UPDATE SET user_id = $2, channel_id = $3, bumped_at = $4, should_remind = $5, should_miss_remind = $6',
                 server_id, user_id, channel_id, bumped_at, should_remind, should_miss_remind
             )
 
