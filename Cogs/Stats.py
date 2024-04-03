@@ -94,14 +94,14 @@ class Stats(commands.Cog):
                     category = key_value[1]
                     category_id = await self.validate_category(ctx, category)
                     if not category_id:
-                        await ctx.reply(f"Category {key_value[1]} does not exist.")
-                        return
+                        return await ctx.reply(f"Category {key_value[1]} does not exist.")
+                        
 
                 elif key_value[0] == "role":
                     role = await self.validate_role(ctx, key_value[1])
                     if not role:
-                        await ctx.reply(f"Role {key_value[1]} does not exist.")
-                        return
+                        return await ctx.reply(f"Role {key_value[1]} does not exist.")
+                        
             
             # *if both a role and category are passed
             if category and role:
@@ -111,8 +111,8 @@ class Stats(commands.Cog):
             elif category:
                 category_roles = [record["role_id"] for record in await get_roles_in_category(self.bot.db_pool, category_id)]
                 if not category_roles:
-                    await ctx.reply(f"Category **{category}** does not have any roles.")
-                    return
+                    return await ctx.reply(f"Category **{category}** does not have any roles.")
+                    
                 
                 category_role_names = []
                 category_role_counts = []
@@ -136,8 +136,8 @@ class Stats(commands.Cog):
                 categories = await get_categories_of_role(self.bot.db_pool, int(role))
                 categories = [record[0] for record in categories]
                 if not categories:
-                    await ctx.reply(f"Role **{ctx.guild.get_role(int(role)).name}** does not exist in any category")
-                    return
+                    return await ctx.reply(f"Role **{ctx.guild.get_role(int(role)).name}** does not exist in any category")
+                    
                 await ctx.send(f"Role **{ctx.guild.get_role(int(role)).name}** is in categories **{categories}**")
                 for category in categories:
                     await self.stats_of_role_in_category(ctx, category, role)
@@ -159,8 +159,8 @@ class Stats(commands.Cog):
         category_id = await get_server_role_category_id(self.bot.db_pool, ctx.guild.id, category)
         category_roles = [record["role_id"] for record in await get_roles_in_category(self.bot.db_pool, category_id)] 
         if not role.isdigit() or int(role) not in category_roles:
-            await ctx.reply(f"Role {role} does not exist in category {category}")
-            return
+            return await ctx.reply(f"Role {role} does not exist in category {category}")
+            
             
         role_count = await get_role_count(self.bot.db_pool, role)
         total_role_counts = 0

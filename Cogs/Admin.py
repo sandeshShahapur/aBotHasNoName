@@ -3,10 +3,11 @@ import asyncio, asyncpg
 from discord.ext import commands
 from data.databases.servers import (get_default_role)
 from data.databases.db_management import (update_db, validate_server, flush_db, flush_db_all)
-from utils.datetime import timer
+from utils.decorators import timer
 import json
 import os
 import time
+from typing import Optional, Literal
 
 
 class Admin(commands.Cog):
@@ -15,6 +16,38 @@ class Admin(commands.Cog):
         self.permissions = ["add_reactions", "administrator", "attach_files", "ban_members", "change_nickname", "connect", "create_events", "create_expressions", "create_instant_invite", "create_private_threads", "create_public_threads", "deafen_members", "embed_links", "external_emojis", "external_stickers", "kick_members", "manage_channels", "manage_emojis", "manage_emojis_and_stickers", "manage_events", "manage_expressions", "manage_guild", "manage_messages", "manage_nicknames", "manage_permissions", "manage_roles", "manage_threads", "manage_webhooks", "mention_everyone", "moderate_members", "move_members", "mute_members", "priority_speaker", "read_message_history", "read_messages", "request_to_speak", "send_messages", "send_messages_in_threads", "send_tts_messages", "send_voice_messages", "speak", "stream", "use_application_commands", "use_embedded_activities", "use_external_emojis", "use_external_sounds", "use_external_stickers", "use_soundboard", "use_voice_activation", "value", "view_audit_log", "view_channel", "view_creator_monetization_analytics"]
         self.ld_permissions = ["send_messages", "create_public_threads", "create_private_threads", "send_messages_in_threads", "use_application_commands", "connect"] #TODO make this abstract
 
+    @commands.command()
+    @commands.guild_only()
+    @commands.is_owner()
+    async def sync(self, ctx: commands.Context, guilds: commands.Greedy[discord.Object], spec: Optional[Literal["~", "*", "^"]] = None) -> None:
+        if not guilds:
+            if spec == "~":
+                synced = await ctx.bot.tree.sync(guild=ctx.guild)
+            elif spec == "*":
+                ctx.bot.tree.copy_global_to(guild=ctx.guild)
+                synced = await ctx.bot.tree.sync(guild=ctx.guild)
+            elif spec == "^":
+                ctx.bot.tree.clear_commands(guild=ctx.guild)
+                await ctx.bot.tree.sync(guild=ctx.guild)
+                synced = []
+            else:
+                synced = await ctx.bot.tree.sync()
+
+            await ctx.send(
+                f"Synced {len(synced)} commands {'globally' if spec is None else 'to the current guild.'}"
+            )
+            return
+
+        ret = 0
+        for guild in guilds:
+            try:
+                await ctx.bot.tree.sync(guild=guild)
+            except discord.HTTPException:
+                pass
+            else:
+                ret += 1
+
+        await ctx.send(f"Synced the tree to {ret}/{len(guilds)}.")
 
     '''obtain a server's role name and id as key value pairs and store them in a json file for reference'''
     @commands.is_owner()
@@ -62,8 +95,7 @@ class Admin(commands.Cog):
     async def clear_all_permissions(self, ctx: commands.Context, *args: str):
         targets = await self.get_targets(ctx, *args)
         if not targets:
-            ctx.send('Aborting, no valid targets found...')
-            return
+            return ctx.send('Aborting, no valid targets found...')
 
         for channel in ctx.guild.text_channels + ctx.guild.voice_channels + ctx.guild.stage_channels + ctx.guild.categories:
              for target in targets:
@@ -123,8 +155,7 @@ class Admin(commands.Cog):
     @timer
     async def sync_channels(self, ctx: commands.Context, *args: str):
         if not args:
-            await ctx.send('No categories specified to sync... Aborting')
-            return
+            return await ctx.send('No categories specified to sync... Aborting')
         
         inputs = []
         for arg in args:
@@ -133,8 +164,8 @@ class Admin(commands.Cog):
 
         categories = [category for category in ctx.guild.categories if category.id in inputs]
         if not categories:
-            await ctx.send('No valid categories found... Aborting')
-            return
+            return await ctx.send('No valid categories found... Aborting')
+            
         
         for category in categories:
             for channel in category.text_channels + category.voice_channels + category.stage_channels:
@@ -222,13 +253,13 @@ class Admin(commands.Cog):
     @databases.command()
     async def flush(self, ctx: commands.Context, *args: str):
         if not args:
-            await ctx.send('No databases specified to flush...')
-            return
+            return await ctx.send('No databases specified to flush...')
+            
         for db in args:
             if db == "all":
-                await ctx.send('Flushing all tables...')
+                return await ctx.send('Flushing all tables...')
                 # await flush_db_all(self.bot.db_pool, db, ctx.guild.id)
-                return
+                
             else:
                 await ctx.send(f'Flushing table {db}...')
             asyncio.sleep(1)
@@ -260,8 +291,8 @@ class Admin(commands.Cog):
 
         lockdown_file_path = f"data/json/lockdowns/{ctx.guild.name}_lockdown.json"
         if os.path.exists(lockdown_file_path):
-            await ctx.send('Server is currently in lockdown mode...\n Aborting')
-            return
+            return await ctx.send('Server is currently in lockdown mode...\n Aborting')
+            
 
         await ctx.send('Maintainance mode activated...\n All commands are disabled...\n')
         await self.bot.change_presence(status=discord.Status.dnd, activity=discord.Game('Maintainance mode...'))
@@ -337,22 +368,22 @@ class Admin(commands.Cog):
     async def unlock_maintainance(self, ctx: commands.Context, *args: str):
         lockdown_file_path = f"data/json/lockdowns/{ctx.guild.name}_lockdown.json"
         if not os.path.exists(lockdown_file_path):
-            await ctx.send('No lockdown file found for this server...\n Aborting')
-            return
+            return await ctx.send('No lockdown file found for this server...\n Aborting')
+            
         with open(lockdown_file_path, "r") as f:
             json_data = json.load(f)
 
         if json_data["server_id"] != ctx.guild.id:
-            await ctx.send('Lockdown file does not belong to this server...\n Aborting')
-            return
+            return await ctx.send('Lockdown file does not belong to this server...\n Aborting')
+            
         
         await ctx.send('Terminating maintainance lockdown...')
         await ctx.send('Unlocking channels...')
 
         json_channels = json_data["channels"]
         if not json_channels:
-            await ctx.send('No channels found in lockdown file...\n Aborting')
-            return
+            return await ctx.send('No channels found in lockdown file...\n Aborting')
+            
         
         while json_channels:
             json_channel = json_channels.pop()
