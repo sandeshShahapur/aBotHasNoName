@@ -84,3 +84,4 @@ Cogs/Plugins/__pycache__/Plugin.cpython-311.pyc
 data/databases/__pycache__/plugins.cpython-311.pyc
 test/__init__.py
 utils/__pycache__/decorators.cpython-311.pyc
+test/__pycache__/test2.cpython-311.pyc

@@ -34,6 +34,7 @@ from data.databases.plugins import (
 from Cogs.Plugins.Invites import (
                                     set_invite
 )
+import json
 from typing import Optional
 import time
 
@@ -76,6 +77,9 @@ async def update_db(ctx, db_pool, server):
         subplugin_config = await get_subplugin_config_template(db_pool, subplugin['name'])
         if subplugin_config:
             server_subplugin = await get_server_subplugin(db_pool, server.id, subplugin['name'])
+            subplugin_config = subplugin_config
+            if 'server_id' in subplugin_config:
+                subplugin_config['server_id'] = server.id
             await set_server_subplugin_config(db_pool, server_subplugin["id"], subplugin_config)
     await ctx.send(f'Plugins and their subplugins loaded')
             
@@ -104,13 +108,14 @@ async def validate_server_plugin(db_pool, server, plugin, validate_server_flag=F
         await set_server_plugin(db_pool, server.id, plugin)
         server_plugin = await get_server_plugin(db_pool, server.id, plugin)
 
-    server_plugin_config = await get_server_plugin_config(db_pool, server_plugin['id'])
-    if not server_plugin_config:
-        plugin_config = await get_plugin_config_template(db_pool, plugin)
-        if plugin_config:
+    plugin_config = await get_plugin_config_template(db_pool, plugin)
+    if plugin_config:
+        server_plugin_config = await get_server_plugin_config(db_pool, server_plugin['id'])
+        if not server_plugin_config:
+            if 'server_id' in plugin_config:
+                plugin_config['server_id'] = server.id
             await set_server_plugin_config(db_pool, server_plugin['id'], plugin_config)
-            server_plugin_config = await get_server_plugin_config(db_pool, server_plugin['id'])
-    
+
     return server_plugin
 
 ''' conditionally validate server.
@@ -134,11 +139,11 @@ async def update_user_roles(db_pool, server, before, after):
     server_user = await validate_user(db_pool, server, after.id, validate_server_flag=True)
 
     if not server_user[0]:
-        print(f'Error: User {after.name} not found in database.')
-        return
+        return print(f'Error: User {after.name} not found in database.')
+    
     if not server_user[1]:
-        sync_user_roles(db_pool, after)
-        return
+        return sync_user_roles(db_pool, after)
+        
 
     before_roles = [role.id for role in before.roles]
     after_roles = [role.id for role in after.roles]

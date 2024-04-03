@@ -9,7 +9,7 @@
         "reminder_message": "{to_ping_mention} It is time to bump the server again!', 'Bump our server by typing /bump!'"
     },
 
-    "bump_miss_reminder": {
+    "miss_reminder": {
         "enabled": false,
         "channel_id": null,
         "interval": 600,

@@ -67,8 +67,15 @@ class aBotHasNoName(commands.Bot):
         handler.setFormatter(formatter)
         logger.addHandler(handler)
 
+        async def init_connection(connection):
+            await connection.set_type_codec(
+                    'json',
+                    encoder=json.dumps,
+                    decoder=json.loads,
+                    schema='pg_catalog'
+                )
         dsn = os.getenv('PROD_DATABASE_URL') if os.getenv('PROD') == 'True' else os.getenv('DEV_DATABASE_URL')
-        db_pool = await asyncpg.create_pool(dsn=dsn, min_size=16, max_size=32)
+        db_pool = await asyncpg.create_pool(dsn=dsn, min_size=16, max_size=32, init=init_connection)
         aBotHasNoName.db_pool = db_pool
 
         # .loading extensions

@@ -95,8 +95,7 @@ class Admin(commands.Cog):
     async def clear_all_permissions(self, ctx: commands.Context, *args: str):
         targets = await self.get_targets(ctx, *args)
         if not targets:
-            ctx.send('Aborting, no valid targets found...')
-            return
+            return ctx.send('Aborting, no valid targets found...')
 
         for channel in ctx.guild.text_channels + ctx.guild.voice_channels + ctx.guild.stage_channels + ctx.guild.categories:
              for target in targets:
@@ -156,8 +155,7 @@ class Admin(commands.Cog):
     @timer
     async def sync_channels(self, ctx: commands.Context, *args: str):
         if not args:
-            await ctx.send('No categories specified to sync... Aborting')
-            return
+            return await ctx.send('No categories specified to sync... Aborting')
         
         inputs = []
         for arg in args:
@@ -166,8 +164,8 @@ class Admin(commands.Cog):
 
         categories = [category for category in ctx.guild.categories if category.id in inputs]
         if not categories:
-            await ctx.send('No valid categories found... Aborting')
-            return
+            return await ctx.send('No valid categories found... Aborting')
+            
         
         for category in categories:
             for channel in category.text_channels + category.voice_channels + category.stage_channels:
@@ -255,13 +253,13 @@ class Admin(commands.Cog):
     @databases.command()
     async def flush(self, ctx: commands.Context, *args: str):
         if not args:
-            await ctx.send('No databases specified to flush...')
-            return
+            return await ctx.send('No databases specified to flush...')
+            
         for db in args:
             if db == "all":
-                await ctx.send('Flushing all tables...')
+                return await ctx.send('Flushing all tables...')
                 # await flush_db_all(self.bot.db_pool, db, ctx.guild.id)
-                return
+                
             else:
                 await ctx.send(f'Flushing table {db}...')
             asyncio.sleep(1)
@@ -293,8 +291,8 @@ class Admin(commands.Cog):
 
         lockdown_file_path = f"data/json/lockdowns/{ctx.guild.name}_lockdown.json"
         if os.path.exists(lockdown_file_path):
-            await ctx.send('Server is currently in lockdown mode...\n Aborting')
-            return
+            return await ctx.send('Server is currently in lockdown mode...\n Aborting')
+            
 
         await ctx.send('Maintainance mode activated...\n All commands are disabled...\n')
         await self.bot.change_presence(status=discord.Status.dnd, activity=discord.Game('Maintainance mode...'))
@@ -370,22 +368,22 @@ class Admin(commands.Cog):
     async def unlock_maintainance(self, ctx: commands.Context, *args: str):
         lockdown_file_path = f"data/json/lockdowns/{ctx.guild.name}_lockdown.json"
         if not os.path.exists(lockdown_file_path):
-            await ctx.send('No lockdown file found for this server...\n Aborting')
-            return
+            return await ctx.send('No lockdown file found for this server...\n Aborting')
+            
         with open(lockdown_file_path, "r") as f:
             json_data = json.load(f)
 
         if json_data["server_id"] != ctx.guild.id:
-            await ctx.send('Lockdown file does not belong to this server...\n Aborting')
-            return
+            return await ctx.send('Lockdown file does not belong to this server...\n Aborting')
+            
         
         await ctx.send('Terminating maintainance lockdown...')
         await ctx.send('Unlocking channels...')
 
         json_channels = json_data["channels"]
         if not json_channels:
-            await ctx.send('No channels found in lockdown file...\n Aborting')
-            return
+            return await ctx.send('No channels found in lockdown file...\n Aborting')
+            
         
         while json_channels:
             json_channel = json_channels.pop()

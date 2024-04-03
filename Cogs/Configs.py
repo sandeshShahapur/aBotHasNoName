@@ -15,8 +15,7 @@ class Configs(commands.Cog):
 
     async def get_default_role(self, ctx: commands.Context):
         role_id = await get_default_role(self.bot.db_pool, ctx.guild.id)
-        role = discord.utils.get(ctx.guild.roles, id=role_id) if role_id else None
-        return role
+        return discord.utils.get(ctx.guild.roles, id=role_id) if role_id else None
 
     #TODO update the configs displayed, add permission checks
     @commands.is_owner()
@@ -40,8 +39,8 @@ class Configs(commands.Cog):
     async def prefix(self, ctx, prefix=None):
         await self.validation(ctx.guild)
         if not prefix:
-            await ctx.send(f"Current prefix: {await get_prefix(self.bot, ctx.message)}")
-            return
+            return await ctx.send(f"Current prefix: {await get_prefix(self.bot, ctx.message)}")
+            
 
         if len(prefix) > 5:
             await ctx.send("Prefix cannot be longer than 5 characters")
@@ -55,11 +54,8 @@ class Configs(commands.Cog):
         await self.validation(ctx.guild)
         if role == "None":
             role = await self.get_default_role(ctx)
-            if not role:
-                await ctx.send("Default role is not set")
-            else:
-                await ctx.send(f"Default role is {role.name}")
-            return
+            return await ctx.send("Default role is not set") if role else await ctx.send(f"Default role is {role.name}")
+            
 
         roles = ctx.guild.roles
         if role.isdigit():
@@ -67,9 +63,8 @@ class Configs(commands.Cog):
         else:
             role = discord.utils.get(roles, name=role)
         if not role:
-            await ctx.send("Role not found")
-            return
-        
+            return await ctx.send("Role not found")
+            
         await set_default_role(self.bot.db_pool, ctx.guild.id, role.id)
         await ctx.send(f"Default role has been changed to {role.name}")
 

@@ -24,10 +24,12 @@ from data.databases.servers import set_server
 import json
 from datetime import datetime, timedelta
 
+from utils.decorators import tolower
+
 class Bumper(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.modules = ["reminder", "missed_missed_reminder", "counter"]
+        self.modules = ["reminder", "miss_reminder", "counter"]
         self.bump_or_miss_reminder.start()
 
     def cog_unload(self):
@@ -40,28 +42,29 @@ class Bumper(commands.Cog):
         pass
 
     @commands.is_owner()
-    @bumper.command(name='bumper_view_config')
-    async def view_config(self, ctx: commands.Context):
+    @bumper.command(name='view_config')
+    async def bumper_view_config(self, ctx: commands.Context):
         server_plugin = await validate_server_plugin(self.bot.db_pool, ctx.guild, 'bumper', validate_server_flag=True)
         if not server_plugin:
-            ctx.send('bumper plugin not found in database.')
+            return await ctx.send('bumper plugin not found in database.')
 
         server_config = await get_server_plugin_config(self.bot.db_pool, server_plugin['id'])
-        ctx.send(f' ```json\n{json.dumps(server_config, indent=4)}``` ')
+        await ctx.send(f' ```json\n{json.dumps(server_config, indent=4)}\n``` ')
 
     @commands.is_owner()
-    @bumper.command(name='bumper_enable')
-    async def enable(self, ctx: commands.Context, module: str):
+    @bumper.command(name='enable')
+    @tolower
+    async def bumper_enable(self, ctx: commands.Context, module: str):
         server_plugin = await validate_server_plugin(self.bot.db_pool, ctx.guild, 'bumper', validate_server_flag=True)
         if not server_plugin:
             self.bot.logger.error(f'Error: Plugin bumper for Server {ctx.guild.name} ({ctx.guild.id}) not found in database.')
 
         if not server_plugin['enabled']:
-            await ctx.send('Please enable the bumper plugin first.')
+            return await ctx.send('Please enable the bumper plugin first.')
 
         if module not in self.modules:
-            await ctx.send(f'{module} is not a valid module.')
-            return
+            return await ctx.send(f'{module} is not a valid module.')
+            
         
         server_config = await get_server_plugin_config(self.bot.db_pool, server_plugin['id'])
         if server_config[module]["enabled"]:
@@ -72,8 +75,9 @@ class Bumper(commands.Cog):
             await ctx.send(f'{module} has been enabled.')
 
     @commands.is_owner()
-    @bumper.command(name='bumper_disable')
-    async def disable(self, ctx: commands.Context, module: str):
+    @bumper.command(name='disable')
+    @tolower
+    async def bumper_disable(self, ctx: commands.Context, module: str):
         server_plugin = await validate_server_plugin(self.bot.db_pool, ctx.guild, 'bumper', validate_server_flag=True)
         if not server_plugin:
             self.bot.logger.error(f'Error: Plugin bumper for Server {ctx.guild.name} ({ctx.guild.id}) not found in database.')
@@ -82,8 +86,7 @@ class Bumper(commands.Cog):
             await ctx.send('Please enable the bumper plugin first.')
 
         if module not in self.modules:
-            await ctx.send(f'{module} is not a valid module.')
-            return
+            return await ctx.send(f'{module} is not a valid module.')
         
         server_config = await get_server_plugin_config(self.bot.db_pool, server_plugin['id'])
         if not server_config[module]["enabled"]:
@@ -101,18 +104,18 @@ class Bumper(commands.Cog):
         pass
 
     @commands.is_owner()
-    @reminder.command(name='reminder_view_config')
-    async def view_config(self, ctx: commands.Context):
+    @reminder.command(name='view_config')
+    async def breminder_view_config(self, ctx: commands.Context):
         server_plugin = await validate_server_plugin(self.bot.db_pool, ctx.guild, 'bumper', validate_server_flag=True)
         if not server_plugin:
             ctx.send('bumper plugin not found in database.')
 
         server_config = await get_server_plugin_config(self.bot.db_pool, server_plugin['id'])
-        ctx.send(f' ```json\n{json.dumps(server_config["reminder"], indent=4)}``` ')
+        await ctx.send(f' ```json\n{json.dumps(server_config["reminder"], indent=4)}\n``` ')
 
     @commands.is_owner()
-    @reminder.command(name='reminder_set_config')
-    async def set_config(self, ctx: commands.Context, channel: discord.TextChannel, to_ping: discord.Role, bump_message: str):
+    @reminder.command(name='set_config')
+    async def breminder_set_config(self, ctx: commands.Context, channel: discord.TextChannel, to_ping: discord.Role, bump_message: str):
         #TODO implement DRY
         server_plugin = await validate_server_plugin(self.bot.db_pool, ctx.guild, 'bumper', validate_server_flag=True)
         if not server_plugin:
@@ -131,26 +134,26 @@ class Bumper(commands.Cog):
         pass
 
     @commands.is_owner()
-    @bump_miss_reminder.command(name='bump_miss_reminder_view_config')
-    async def view_config(self, ctx: commands.Context):
+    @bump_miss_reminder.command(name='view_config')
+    async def bmiiss_reminder_view_config(self, ctx: commands.Context):
         server_plugin = await validate_server_plugin(self.bot.db_pool, ctx.guild, 'bumper', validate_server_flag=True)
         if not server_plugin:
             ctx.send('bumper plugin not found in database.')
 
         server_config = await get_server_plugin_config(self.bot.db_pool, server_plugin['id'])
-        ctx.send(f' ```json\n{json.dumps(server_config["bump_miss_reminder"], indent=4)}``` ')
+        await ctx.send(f' ```json\n{json.dumps(server_config["miss_reminder"], indent=4)}\n``` ')
 
     @commands.is_owner()
-    @bump_miss_reminder.command(name='bump_miss_reminder_set_config')
-    async def set_config(self, ctx: commands.Context, channel: discord.TextChannel, interval: int, to_ping: discord.Role):
+    @bump_miss_reminder.command(name='set_config')
+    async def bmiss_reminder_set_config(self, ctx: commands.Context, channel: discord.TextChannel, interval: int, to_ping: discord.Role):
         server_plugin = await validate_server_plugin(self.bot.db_pool, ctx.guild, 'bumper', validate_server_flag=True)
         if not server_plugin:
             self.bot.logger.error(f'Error: Plugin bumper for Server {ctx.guild.name} ({ctx.guild.id}) not found in database.')
 
         server_config = await get_server_plugin_config(self.bot.db_pool, server_plugin['id'])
-        server_config['bump_miss_reminder']['channel_id'] = channel.id
-        server_config['bump_miss_reminder']['interval'] = interval
-        server_config['bump_miss_reminder']['to_ping_id'] = to_ping.id
+        server_config['miss_reminder']['channel_id'] = channel.id
+        server_config['miss_reminder']['interval'] = interval
+        server_config['miss_reminder']['to_ping_id'] = to_ping.id
         await set_server_plugin_config(self.bot.db_pool, server_plugin['id'], server_config)
         await ctx.send('Configuration has been set.')
 
@@ -160,14 +163,14 @@ class Bumper(commands.Cog):
         pass
 
     @commands.is_owner()
-    @counter.command(name='counter_view_config')
-    async def view_config(self, ctx: commands.Context):
+    @counter.command(name='view_config')
+    async def bcounter_view_config(self, ctx: commands.Context):
         server_plugin = await validate_server_plugin(self.bot.db_pool, ctx.guild, 'bumper', validate_server_flag=True)
         if not server_plugin:
             ctx.send('bumper plugin not found in database.')
 
         server_config = await get_server_plugin_config(self.bot.db_pool, server_plugin['id'])
-        ctx.send(f' ```json\n{json.dumps(server_config["counter"], indent=4)}``` ')
+        await ctx.send(f' ```json\n{json.dumps(server_config["counter"], indent=4)}\n``` ')
         
 
     '''''''''''''''''''''''''''''''''ON BUMP EVENT'''''''''''''''''''''''''''''''''''
@@ -193,8 +196,8 @@ class Bumper(commands.Cog):
             if message.interaction:
                 bumper_config = await get_server_plugin_config(self.bot.db_pool, server_plugin['id'])
                 if not bumper_config:
-                    self.bot.logger.error(f'Error: Server {message.guild.name} ({message.guild.id}) does not have a bumper configuration.')
-                    return
+                    return self.bot.logger.error(f'Error: Server {message.guild.name} ({message.guild.id}) does not have a bumper configuration.')
+                    
 
                 user = message.interaction.user
                 server_user = await validate_user(self.bot.db_pool, message.guild, user.id, validate_server_flag=False) #we recquire valid server_user
@@ -267,8 +270,5 @@ class Bumper(commands.Cog):
         await self.bot.wait_until_ready()
 
         
-
-                    
-
 async def setup(bot: commands.Bot):
     await bot.add_cog(Bumper(bot))

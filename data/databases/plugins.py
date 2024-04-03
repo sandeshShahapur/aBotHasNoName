@@ -1,19 +1,24 @@
+import json
 '''''''''''''''''''''''''PLUIGN MANAGEMENT'''''''''''''''''''''''''''
 async def get_plugins(db_pool):
     async with db_pool.acquire() as connection:
-        return await connection.fetch('SELECT name FROM plugins')
+        async with connection.transaction():
+            return await connection.fetch('SELECT name FROM plugins')
     
 async def get_subplugins(db_pool):
     async with db_pool.acquire() as connection:
-        return await connection.fetch('SELECT name FROM subplugins')
+        async with connection.transaction():
+            return await connection.fetch('SELECT name FROM subplugins')
     
 async def get_plugin_config_template(db_pool, plugin_name):
     async with db_pool.acquire() as connection:
-        return await connection.fetchval('SELECT config_template FROM plugin_config_templates WHERE plugin_name = $1', plugin_name)
+        async with connection.transaction():
+            return await connection.fetchval('SELECT config_template FROM plugin_config_templates WHERE plugin_name = $1', plugin_name)
 
 async def get_subplugin_config_template(db_pool, subplugin_name):
     async with db_pool.acquire() as connection:
-        return await connection.fetchval('SELECT config_template FROM subplugin_config_templates WHERE subplugin_name = $1', subplugin_name)    
+        async with connection.transaction():
+            return await connection.fetchval('SELECT config_template FROM subplugin_config_templates WHERE subplugin_name = $1', subplugin_name)    
 
 
 async def set_server_plugin(db_pool, server_id, plugin_name):
@@ -26,7 +31,8 @@ async def set_server_plugin(db_pool, server_id, plugin_name):
 
 async def get_server_plugin(db_pool, server_id, plugin_name):
     async with db_pool.acquire() as connection:
-        return await connection.fetchrow('SELECT * FROM server_plugins WHERE server_id = $1 AND plugin_name = $2', server_id, plugin_name)
+        async with connection.transaction():
+            return await connection.fetchrow('SELECT * FROM server_plugins WHERE server_id = $1 AND plugin_name = $2', server_id, plugin_name)
     
 async def set_server_plugin_config(db_pool, server_plugin_id, config):
     async with db_pool.acquire() as connection:
@@ -38,12 +44,14 @@ async def set_server_plugin_config(db_pool, server_plugin_id, config):
 
 async def get_server_plugin_config(db_pool, server_plugin_id):
     async with db_pool.acquire() as connection:
-        return await connection.fetchval('SELECT config FROM server_plugin_configs WHERE server_plugin_id = $1', server_plugin_id)
+        async with connection.transaction():
+            return await connection.fetchval('SELECT config FROM server_plugin_configs WHERE server_plugin_id = $1', server_plugin_id)
 
     
 async def get_server_subplugin(db_pool, server_id, subplugin_name):
     async with db_pool.acquire() as connection:
-        return await connection.fetchrow('SELECT * FROM server_subplugins WHERE server_id = $1 AND subplugin_name = $2', server_id, subplugin_name)
+        async with connection.transaction():
+            return await connection.fetchrow('SELECT * FROM server_subplugins WHERE server_id = $1 AND subplugin_name = $2', server_id, subplugin_name)
 
 async def set_server_subplugin(db_pool, server_id, subplugin_name):
     async with db_pool.acquire() as connection:
@@ -63,7 +71,8 @@ async def set_server_subplugin_config(db_pool, server_subplugin_id, config):
 
 async def get_server_subplugin_config(db_pool, server_subplugin_id):
     async with db_pool.acquire() as connection:
-        return await connection.fetchval('SELECT config FROM server_subplugin_configs WHERE server_subplugin_id = $1', server_subplugin_id)
+        async with connection.transaction():
+            return await connection.fetchval('SELECT config FROM server_subplugin_configs WHERE server_subplugin_id = $1', server_subplugin_id)
 
 
 async def set_server_plugin_enabled(db_pool, server_plugin_id, enabled):
@@ -76,11 +85,13 @@ async def set_server_plugin_enabled(db_pool, server_plugin_id, enabled):
 
 async def get_server_plugin_enabled(db_pool, server_plugin_id):
     async with db_pool.acquire() as connection:
-        return await connection.fetchval('SELECT enabled FROM server_plugins WHERE id = $1', server_plugin_id)
+        async with connection.transaction():
+            return await connection.fetchval('SELECT enabled FROM server_plugins WHERE id = $1', server_plugin_id)
 
 async def get_server_plugin_config(db_pool, server_plugin_id):
     async with db_pool.acquire() as connection:
-        return await connection.fetchrow('SELECT config FROM server_plugin_configs WHERE server_plugin_id = $1', server_plugin_id)
+        async with connection.transaction():
+            return await connection.fetchrow('SELECT config FROM server_plugin_configs WHERE server_plugin_id = $1', server_plugin_id)
     
 
 async def set_server_plugin_config(db_pool, server_plugin_id, config):
@@ -93,7 +104,8 @@ async def set_server_plugin_config(db_pool, server_plugin_id, config):
 
 async def get_server_plugin_config(db_pool, server_plugin_id):
     async with db_pool.acquire() as connection:
-        return await connection.fetchval('SELECT config FROM server_plugin_configs WHERE server_plugin_id = $1', server_plugin_id)
+        async with connection.transaction():
+            return await connection.fetchval('SELECT config FROM server_plugin_configs WHERE server_plugin_id = $1', server_plugin_id)
     
 
 '''''''''''''''''''''''''''BUMPER PLUGIN'''''''''''''''''''''''''''''
@@ -107,7 +119,8 @@ async def bump(db_pool, server_id, user_id, channel_id, bumped_at, should_remind
 
 async def get_bump(db_pool, server_id):
     async with db_pool.acquire() as connection:
-        return await connection.fetchrow('SELECT * FROM bumps WHERE server_id = $1', server_id)
+        async with connection.transaction():
+            return await connection.fetchrow('SELECT * FROM bumps WHERE server_id = $1', server_id)
     
 async def update_bump_reminder(db_pool, server_id, should_remind):
     async with db_pool.acquire() as connection:
@@ -146,14 +159,16 @@ async def bump_counts(db_pool, server_user):
         
 async def get_server_bump_count(db_pool, server_id):
     async with db_pool.acquire() as connection:
-        return await connection.fetchval(
-            f"SELECT SUM(count) FROM bump_counts bc INNER JOIN server_users su ON bc.server_user_id = su.id where su.server_id = $1 GROUP BY server_id",
-            server_id
-        )
+        async with connection.transaction():
+            return await connection.fetchval(
+                f"SELECT SUM(count) FROM bump_counts bc INNER JOIN server_users su ON bc.server_user_id = su.id where su.server_id = $1 GROUP BY server_id",
+                server_id
+            )
     
 async def get_server_user_bump_count(db_pool, server_user_id):
     async with db_pool.acquire() as connection:
-        return await connection.fetchval(
-            f"SELECT count FROM bump_counts WHERE server_user_id = $1",
-            server_user_id
-        )
+        async with connection.transaction():
+            return await connection.fetchval(
+                f"SELECT count FROM bump_counts WHERE server_user_id = $1",
+                server_user_id
+            )
