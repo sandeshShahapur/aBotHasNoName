@@ -126,7 +126,7 @@ class Stats(commands.Cog):
                 await standard_pie_chart(values=category_role_counts, names=category_role_names, title=None, path=path, filename=filename)
                 
                 file = discord.File(path+filename, filename=filename)
-                embed = await create_embed(title=f"Roles demographics in {category}", image_url=f"attachment://" + filename, footer=f"{self.bot.user.name} • Asked by {ctx.author.name}", footer_icon_url=self.bot.user.avatar.url, timestamp=True)
+                embed = await create_embed(title=f"Roles demographics in {category}", description=f'Sum total role assigns are **{sum(category_role_counts)}**', image_url=f"attachment://" + filename, footer=f"{self.bot.user.name} • Asked by {ctx.author.name}", footer_icon_url=self.bot.user.avatar.url, timestamp=True)
                 await ctx.send(file=file, embed=embed)
 
                 os.remove(path+filename)

@@ -22,7 +22,7 @@ async def standard_pie_chart(values, names, title, path, filename):
     # Update trace properties
     fig.update_traces(
         marker=dict(line=dict(color='#000000', width=1)),
-        textinfo='percent',
+        textinfo='percent+value',
         textfont=dict(color='white', size=12, family='Arial, sans-serif')
     )
 
