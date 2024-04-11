@@ -1,11 +1,8 @@
-import asyncio
-import discord
 from discord.ext import commands
-from datetime import datetime
-from data.databases.servers import get_server
-from data.databases.roles import (
-                                get_server_role_categories, 
-                                get_server_role_category_id, 
+from data.databases.core.servers import get_server
+from data.databases.core.roles import (
+                                get_server_role_categories,
+                                get_server_role_category_id,
                                 get_roles_in_category,
                                 set_role_category,
                                 set_server_role_category_id,
@@ -16,15 +13,15 @@ from data.databases.roles import (
                                 delete_server_role_category_role,
                                 set_server_role_category_name
                             )
-from data.databases.db_management import update_db
-from typing import Union, Optional
+from data.databases.core.db_management import update_db
+from typing import Optional
 
 
 class Roles(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    #TODO make this display the summary
+    # TODO make this display the summary
     @commands.group(name="roles", invoke_without_command=False)
     async def roles(self, ctx):
         if not await get_server(self.bot.db_pool, ctx.guild.id):
@@ -33,15 +30,13 @@ class Roles(commands.Cog):
         if ctx.invoked_subcommand is None:
             await ctx.reply("im here to help you with roles")
 
-    
-
     '''''''''''''''''ROLES CATEGORY'''''''''''''''''''''
     async def server_category_exists(self, ctx, category, error_message="Category does not exist."):
         return await get_server_role_category_id(self.bot.db_pool, ctx.guild.id, category)
 
     @roles.group(name="categories", invoke_without_command=True)
     async def categories(self, ctx, category: Optional[str], role: Optional[str]):
-        
+
         if ctx.invoked_subcommand is None:
             if category:
                 if await self.server_category_exists(ctx, category):
@@ -53,7 +48,6 @@ class Roles(commands.Cog):
     async def rename(self, ctx, category, new_category):
         if not category or not new_category:
             return await ctx.reply("Please specify the category and the new category name.")
-            
 
         if await self.server_category_exists(ctx, category):
             await set_role_category(self.bot.db_pool, new_category)
@@ -68,13 +62,14 @@ class Roles(commands.Cog):
         categories = await get_server_role_categories(self.bot.db_pool, ctx.guild.id)
         if not categories:
             return await ctx.reply("No categories found.")
-            
+
         else:
             categories = [category[0] for category in categories]
             message = await self.display_categories_message(ctx, categories)
 
             if len(message) > 2000:
-                await ctx.reply("Too many categories to display. Please use the `roles categories` command while specifying a category.")
+                await ctx.reply("Too many categories to display."
+                                " Please use the `roles categories` command while specifying a category.")
             else:
                 await ctx.reply(message)
 
@@ -93,12 +88,11 @@ class Roles(commands.Cog):
     async def create(self, ctx, category, *roles):
         if await get_server_role_category_id(self.bot.db_pool, ctx.guild.id, category):
             return await ctx.reply("Category already exists.")
-            
 
         await set_role_category(self.bot.db_pool, category)
         await set_server_role_category_id(self.bot.db_pool, ctx.guild.id, category)
         server_role_category = await get_server_role_category_id(self.bot.db_pool, ctx.guild.id, category)
-        
+
         if await self.server_category_exists(ctx, category, "Category could not be created."):
             await self.add_roles_to_server_category(ctx, category, server_role_category, roles)
 
@@ -111,7 +105,7 @@ class Roles(commands.Cog):
             await delete_server_role_category_id(self.bot.db_pool, server_role_category_id)
             await ctx.reply(f"Category {category} has been deleted.")
             await delete_role_category(self.bot.db_pool, category)
-    
+
     @commands.is_owner()
     @categories.command(name="add_roles")
     async def add_roles(self, ctx, category, *roles):
@@ -142,7 +136,7 @@ class Roles(commands.Cog):
                     await ctx.reply(f"Role {role} has been removed from the category **{category}**.")
                 else:
                     await ctx.reply(f"Role {role} does not exist in the server.")
-        
+
 
 async def setup(bot: commands.Bot):
-    await bot.add_cog(Roles(bot)) 
+    await bot.add_cog(Roles(bot))
