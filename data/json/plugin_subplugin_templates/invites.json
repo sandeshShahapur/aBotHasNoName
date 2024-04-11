@@ -1,0 +1,21 @@
+{
+    "server_id": null,
+
+    "channel_id": null,
+
+    "join_message": "**{user}** is our **{server_member_count}th** member! ",
+    "inviter_resolved_message": "They were invited by **{inviter}**! ",
+    "inviter_unresolved_message": "We don't know who invited them! ",
+
+    "leave_message": "**{user}** has left! We now have **{server_member_count}** members!",
+
+    "counter": {
+        "enabled": false,
+
+        "known_join_message": " who now has **{invite_count}** invites!",
+        "unknown_join_message": " . We have **{unresolved_count}** unresolved inviters!",
+
+        "known_leave_message": " They were invited by **{inviter}** who now has **{invite_count}** invites!",
+        "unknown_leave_message": " They were invited by an unknown inviter! We have **{unresolved_count}** unresolved inviters!"
+    }
+}

@@ -1,16 +1,7 @@
 import discord
-import asyncio
 from discord.ext import commands
-from data.databases.message_handler import log_message
-from utils.decorators import convert_utc_to_ist
-from data.databases.servers import set_server
-from data.databases.users import (
-                                    set_user, 
-                                    set_server_user, 
-                                    get_server_user
-                                    )
-from data.databases.db_management import validate_user
-from utils.embeds import create_embed
+from data.databases.core.message_handler import log_message
+
 
 class Messages(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -32,4 +23,4 @@ class Messages(commands.Cog):
 
 
 async def setup(bot: commands.Bot):
-    await bot.add_cog(Messages(bot)) 
+    await bot.add_cog(Messages(bot))

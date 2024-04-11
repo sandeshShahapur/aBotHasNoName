@@ -1,40 +1,27 @@
 # @client.event - to register an event
-# async await - https://www.reddit.com/r/learnprogramming/comments/tya94m/comment/i3qy6ig/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
-import asyncio
+# async await - https://www.reddit.com/r/learnprogramming/comments/tya94m/comment/i3qy6ig/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content= # noqa
 import discord
 from discord.ext import commands
 import os
 import json
 from dotenv import load_dotenv
-import logging, logging.handlers
+import logging
+import logging.handlers
 from typing import List, Optional
-from data.databases.servers import (
-                                        set_server,
+from data.databases.core.servers import (
                                         get_prefix
                                     )
-from data.databases.users import ( 
-                                    set_user,
-                                    set_server_user,
-                                    get_server_user,    #! anytime you use this, if not present, set it; must validate.
-                                )
-from Cogs.Plugins.Invites import (
-                                    set_invite
-)
-from data.databases.roles import (
-                                get_server_user_roles,
-                                set_server_user_role,
-                                delete_server_user_role,
+from data.databases.core.roles import (
                                 delete_role
                             )
-from data.databases.db_management import (
-                                validate_server,
-                                validate_user,
+from data.databases.core.db_management import (
                                 update_user_roles,
                                 sync_user_roles,
                                 update_db
                             )
-import time
 import asyncpg
+
+
 class aBotHasNoName(commands.Bot):
     db_pool: Optional[asyncpg.pool.Pool] = None
     initial_extensions: List[str] = []
@@ -85,8 +72,6 @@ class aBotHasNoName(commands.Bot):
                 print(f"Loaded extension: {extension}")
             except Exception as e:
                 print(f"Failed to load extension {extension}: {e}")
-
-
         print(f'{self.user} has setupped!')
 
     async def on_connect(self) -> None:
@@ -103,8 +88,8 @@ class aBotHasNoName(commands.Bot):
         print(f'{self.user} has resumed connection in Discord!')
         await self.change_presence(status=discord.Status.online, activity=discord.Game('.help and your mom'))
 
-    #TODO practically, would require permissions checks.
-    #TODO add exception handling    
+    # TODO practically, would require permissions checks.
+    # TODO add exception handling
     async def on_guild_join(self, guild: discord.Guild) -> None:
         await update_db(aBotHasNoName.db_pool, guild)
 
@@ -113,10 +98,14 @@ class aBotHasNoName(commands.Bot):
         pass
 
     async def on_member_join(self, member: discord.Member) -> None:
+        '''
+        # !musn't be enabled until the moderation plugin is implemented.
+        # !other on_member_join events must wait until this is executed.
+
         await validate_server(aBotHasNoName.db_pool, member.guild)
         await set_user(aBotHasNoName.db_pool, member.id)
-        
-        #.if the user has rejoined the server, then add the roles the user had before leaving the server.'''
+
+        # if the user has rejoined the server, then add the roles the user had before leaving the server.
         rejoined = await get_server_user(aBotHasNoName.db_pool, member.guild.id, member.id)
         if rejoined:
             guild_roles = member.guild.roles
@@ -126,7 +115,8 @@ class aBotHasNoName(commands.Bot):
             await member.add_roles(*previous_member_roles, atomic=False)
         else:
             await set_server_user(aBotHasNoName.db_pool, member.guild.id, member.id)
-        
+        '''
+        pass
 
     # !Should not remove user from database, as it would remove all the roles the user has in all the servers.
     # *This method is only called if the user is present in internal cache.
@@ -140,36 +130,31 @@ class aBotHasNoName(commands.Bot):
             await sync_user_roles(aBotHasNoName.db_pool, payload.user, validate=True)
 
     async def on_member_update(self, before: discord.Member, after: discord.Member) -> None:
-    # *role updates*
+        # *role updates*
         # *add/remove the roles that have been added/removed
         await update_user_roles(aBotHasNoName.db_pool, after.guild, before, after)
-        
-    async def on_invite_create(self, invite: discord.Invite) -> None:
-        server_user = await validate_user(aBotHasNoName.db_pool, invite.guild, invite.inviter.id, validate_server_flag=True)
-        await set_invite(aBotHasNoName.db_pool, invite.code, server_user[0], invite.uses, invite.created_at)
-
-    # *should not remove invite from database as we want to track retention percentage of the users
-    async def on_invite_delete(self, invite: discord.Invite) -> None:
-        pass
-            
 
     async def on_guild_role_delete(self, role: discord.Role) -> None:
         await delete_role(aBotHasNoName.db_pool, role.id)
-        #TODO also do for role categories
+        # TODO also do for role categories
 
     async def close(self) -> None:
         await super().close()
         print(f'{self.user} has logged out of and exited Discord!')
         await aBotHasNoName.db_pool.close()
 
-        
+
 def main() -> None:
     with open('config.json', 'r') as f:
         config = json.load(f)
         owner_id = config['owner_id']
 
-    intents = discord.Intents.all() #intent basically allows a bot to subscribe to specific buckets of events
-    initial_extensions = ['Cogs.Stats', 'Cogs.Messages', 'Cogs.Configs', 'Cogs.Admin', 'Cogs.Roles', 'Cogs.Plugins.Plugin', 'Cogs.Plugins.Invites', 'Cogs.Plugins.Bumper']
+    intents = discord.Intents.all()  # intent basically allows a bot to subscribe to specific buckets of events
+    initial_extensions = [
+        'Cogs.Stats', 'Cogs.Messages', 'Cogs.Configs', 'Cogs.Admin', 'Cogs.Roles',
+        'Cogs.Plugins.Plugin', 'Cogs.Plugins.Invite_Tracker', 'Cogs.Plugins.Bumper',
+        'Cogs.Core.Events'
+    ]
     description = '''A bot that has no name'''
 
     bot = aBotHasNoName(
@@ -184,7 +169,8 @@ def main() -> None:
     if os.getenv('PROD') == 'true':
         bot.run(os.getenv('PROD_TOKEN'))
     else:
-        bot.run(os.getenv('DEV_TOKEN')) #run bot
+        bot.run(os.getenv('DEV_TOKEN'))  # run bot
+
 
 if __name__ == '__main__':
     main()
