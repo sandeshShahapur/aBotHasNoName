@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, timezone
 from discord.ext import commands
 
 from Cogs.Plugins.Invite_Tracker import Invite_Tracker, sync_invites
@@ -19,7 +19,7 @@ class Events (commands.Cog):
                 self.bot.db_pool, server, dependant, validate_server_flag=True
             )
             if not server_plugin:
-                self.bot.logger.error(
+                await self.bot.logger.error(
                     f'Error: Plugin {dependant} for Server {server.name} ({server.id}) not found in database.'
                 )
                 continue
@@ -30,13 +30,13 @@ class Events (commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, member):
         '''Join and leave tables'''
-        if self.should_process_event(member.guild, self.join_leave_dependants):
+        if await self.should_process_event(member.guild, self.join_leave_dependants):
             # *find inviter
             server_invites = await member.guild.invites()
             server_invite_counts = {invite.code: invite.uses for invite in server_invites}
             db_invites = await get_server_invites(self.bot.db_pool, member.guild.id)
 
-            potential_inviter, discrepant_inviters = []
+            potential_inviter, discrepant_inviters = [], []
             for db_invite in db_invites:
                 count = server_invite_counts.get(db_invite['code'])
                 if count is None:
@@ -50,17 +50,21 @@ class Events (commands.Cog):
                         discrepant_inviters.append(db_invite['code'])
 
             if len(potential_inviter) == 1 and not discrepant_inviters:
-                await set_invite(self.bot.db_pool, potential_inviter[0]['code'], potential_inviter[0]['uses'] + 1)
-                inviter_id = potential_inviter[0]['created_by']
+                await set_invite(
+                    self.bot.db_pool,
+                    potential_inviter[0][1],
+                    potential_inviter[0][2] + 1
+                )
+                inviter_id = potential_inviter[0][0]
             else:
                 inviter_id = None
 
         user_id = await validate_user(self.bot.db_pool, member.guild, member.id)
-        invite_code = potential_inviter[0]['code'] if len(potential_inviter) == 1 and not discrepant_inviters else None
-        await set_join(self.bot.db_pool, inviter_id, user_id, invite_code, datetime.now(datetime.timezone.utc))
+        invite_code = potential_inviter[0][1] if len(potential_inviter) == 1 and not discrepant_inviters else None
+        await set_join(self.bot.db_pool, user_id[0], inviter_id, invite_code, datetime.now(timezone.utc))
 
         if not inviter_id:
-            await sync_invites(self.bot, member.guild)
+            await sync_invites(self.bot.db_pool, member.guild)
 
         # Dependant Events
         if await self.should_process_event(member.guild, ["invite_tracker"]):
@@ -81,21 +85,25 @@ class Events (commands.Cog):
             return
 
         async def set_get_join(server_user_id):
-            await set_join(self.bot.db_pool, server_user_id, None, None, datetime.now(datetime.timezone.utc))
+            await set_join(self.bot.db_pool, server_user_id, None, None, datetime.now(timezone.utc))
             return await get_join(self.bot.db_pool, server_user_id)
 
-        if self.should_process_event(guild, self.join_leave_dependants):
+        if await self.should_process_event(guild, self.join_leave_dependants):
             server_user = await validate_user(self.bot.db_pool, guild, payload.user.id)
             join_event = await get_join(self.bot.db_pool, server_user[0])
             if join_event is None:
                 join_event = await set_get_join(server_user[0])
 
-            leave_event = get_leave(self.bot.db_pool, join_event['id'])
+            leave_event = await get_leave(self.bot.db_pool, join_event["id"])
             if leave_event:
                 join_event = await set_get_join(server_user[0])
 
-            await set_leave(self.bot.db_pool, join_event['id'], datetime.now(datetime.timezone.utc))
+            await set_leave(self.bot.db_pool, join_event["id"], datetime.now(timezone.utc))
 
         # Dependant Events
         if await self.should_process_event(guild, ["invite_tracker"]):
-            await Invite_Tracker(self.bot).on_member_remove(payload)
+            await Invite_Tracker(self.bot).on_raw_member_remove(payload)
+
+
+async def setup(bot):
+    await bot.add_cog(Events(bot))

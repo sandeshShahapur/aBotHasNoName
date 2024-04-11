@@ -150,9 +150,11 @@ def main() -> None:
         owner_id = config['owner_id']
 
     intents = discord.Intents.all()  # intent basically allows a bot to subscribe to specific buckets of events
-    initial_extensions = ['Cogs.Stats', 'Cogs.Messages', 'Cogs.Configs', 'Cogs.Admin', 'Cogs.Roles',
-                          'Cogs.Plugins.Plugin', 'Cogs.Plugins.InviteTracker', 'Cogs.Plugins.Bumper',
-                          'Cogs.test.test']
+    initial_extensions = [
+        'Cogs.Stats', 'Cogs.Messages', 'Cogs.Configs', 'Cogs.Admin', 'Cogs.Roles',
+        'Cogs.Plugins.Plugin', 'Cogs.Plugins.Invite_Tracker', 'Cogs.Plugins.Bumper',
+        'Cogs.Core.Events'
+    ]
     description = '''A bot that has no name'''
 
     bot = aBotHasNoName(

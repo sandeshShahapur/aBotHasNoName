@@ -41,7 +41,7 @@ class Stats(commands.Cog):
                 if not user:
                     try:
                         user = await self.bot.fetch_user(top_user[0])
-                    except discord.errors.NotFound:
+                    except discord.NotFound:
                         user = None
                 username = user.name if user else "Unknown"
                 message += f"{i+1}. **{username}** with **{user[1]}** messages.\n"
@@ -65,7 +65,7 @@ class Stats(commands.Cog):
                 if not user:
                     try:
                         user = await self.bot.fetch_user(bumper[0])
-                    except discord.errors.NotFound:
+                    except discord.NotFound:
                         user = None
                 username = user.name if user else "Unknown"
 

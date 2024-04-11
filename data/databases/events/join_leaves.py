@@ -12,12 +12,13 @@ async def set_join(db_pool, server_user_id, inviter_id, invite_code, joined_at):
 async def get_join(db_pool, server_user_id):
     async with db_pool.acquire() as connection:
         async with connection.transaction():
-            return await connection.fetch(
+            join_event_rows = await connection.fetch(
                 "SELECT * FROM join_events WHERE server_user_id = $1"
                 " ORDER BY joined_at DESC"
                 " LIMIT 1",
                 server_user_id
             )
+            return join_event_rows[0] if join_event_rows else None
 
 
 async def get_invited_count(db_pool, inviter_id):
@@ -34,7 +35,7 @@ async def set_leave(db_pool, join_id, left_at): # noqa
     async with db_pool.acquire() as connection:
         async with connection.transaction():
             await connection.execute(
-                "INSERT INTO join_events (left_at) = $2 WHERE join_id = $1",
+                "INSERT INTO leave_events (join_id, left_at) VALUES ($1, $2)",
                 join_id, left_at
             )
 
@@ -42,8 +43,8 @@ async def set_leave(db_pool, join_id, left_at): # noqa
 async def get_leave(db_pool, join_id):
     async with db_pool.acquire() as connection:
         async with connection.transaction():
-            return await connection.fetchval(
-                "SELECT left_at FROM join_events WHERE join_id = $1",
+            return await connection.fetchrow(
+                "SELECT * FROM leave_events WHERE join_id = $1",
                 join_id
             )
 

@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 import discord
 from discord.ext import commands
 
@@ -16,10 +16,10 @@ async def sync_invites(db_pool, server):
 
     # *set or update invites present in the server which are or are not in the database.
     server_invites = await server.invites()
-    for invite in await server_invites:
+    for invite in server_invites:
         invited_by = invite.inviter.id or -1
         server_user = await validate_user(db_pool, server, invited_by)
-        await set_invite(db_pool, invite.code, server_user[0], invite.uses, invite.created_at, server.id)
+        await set_invite(db_pool, invite.code, invite.uses, server_user[0], invite.created_at, server.id)
 
     ''' delete invites present in the database which are not in the server.
         server_id is stored in the invites database to identify which server the invite belongs to
@@ -33,9 +33,8 @@ async def sync_invites(db_pool, server):
 
 
 class Invite_Tracker(commands.Cog):
-    def __init__(self, bot: commands.Bot, server: discord.Guild):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.server = server
         self.modules = ["counter"]
         # self.bump_or_miss_reminder.start()
 
@@ -70,7 +69,11 @@ class Invite_Tracker(commands.Cog):
     @invite_tracker.command(name='set_config')
     async def invite_tracker_set_config(self, ctx: commands.Context, channel: discord.TextChannel):
         channel = channel.id or channel
-        await set_config(self, ctx, 'invite_tracker', None, channel=channel)
+        await set_config(self, ctx, 'invite_tracker', None, channel_id=channel)
+
+    @invite_tracker.command(name='sync_invites')
+    async def invite_tracker_sync_invites(self, ctx: commands.Context):
+        await sync_invites(self.bot.db_pool, ctx.guild)
 
     '''''''''''''''''''''''''''''''''GUILD INVITE EVENTS'''''''''''''''''''''''''''''''''''
     @commands.Cog.listener()
@@ -80,8 +83,8 @@ class Invite_Tracker(commands.Cog):
         await set_invite(
             self.bot.db_pool,
             invite.code,
-            created_by,
             invite.uses,
+            created_by[0],
             invite.created_at,
             invite.guild.id
         )
@@ -127,12 +130,13 @@ class Invite_Tracker(commands.Cog):
             )
 
         server_user = await validate_user(self.bot.db_pool, member.guild, member.id)
-        join_event = get_join(self.bot.db_pool, server_user[0])
+        join_event = await get_join(self.bot.db_pool, server_user[0])
+        inviter = None
         if join_event['inviter_id'] is not None:
             inviter_user_id = await get_user_from_server_user(self.bot.db_pool, join_event['inviter_id'])
             try:
                 inviter = await member.guild.fetch_member(inviter_user_id)
-            except discord.errors.NotFound:
+            except discord.NotFound:
                 inviter = None
             msg += server_config["inviter_resolved_message"].format(
                 inviter=inviter.name if inviter else "Unknown"
@@ -148,12 +152,12 @@ class Invite_Tracker(commands.Cog):
             if inviter is not None:
                 msg += server_config["counter"]["known_join_message"].format(
                     invite_count=(
-                        await get_invited_count(self.bot.db_pool, inviter.id)
-                        - await get_invited_leaves_count(self.bot.db_pool, inviter.id)
+                        await get_invited_count(self.bot.db_pool, join_event['inviter_id'])
+                        - await get_invited_leaves_count(self.bot.db_pool, join_event['inviter_id'])
                     )
                 )
             else:
-                msg += server_config["counter"]["invites_unresolved_message"].format(
+                msg += server_config["counter"]["unknown_join_message"].format(
                     unresolved_count="<not implemented yet>"
                 )
         await member.guild.get_channel(server_config['channel_id']).send(msg)
@@ -171,7 +175,7 @@ class Invite_Tracker(commands.Cog):
 
         if server_config['counter']['enabled']:
             server_user = await validate_user(self.bot.db_pool, guild, payload.user.id)
-            join_event = get_join(self.bot.db_pool, server_user[0])
+            join_event = await get_join(self.bot.db_pool, server_user[0])
             if not join_event:  # TODO integrate into plugin
                 await set_join(self.bot.db_pool, server_user[0], None, None, datetime.now(datetime.timezone.utc))
                 join_event = await get_join(self.bot.db_pool, server_user[0])
@@ -180,14 +184,14 @@ class Invite_Tracker(commands.Cog):
                 inviter_user_id = await get_user_from_server_user(self.bot.db_pool, join_event['inviter_id'])
                 try:
                     inviter = await guild.fetch_member(inviter_user_id)
-                except discord.errors.NotFound:
+                except discord.NotFound:
                     inviter = None
 
                 msg += server_config["counter"]["known_leave_message"].format(
                     inviter=inviter.name if inviter else "Unknown",
                     invite_count=(
-                        await get_invited_count(self.bot.db_pool, inviter.id)
-                        - await get_invited_leaves_count(self.bot.db_pool, inviter.id)
+                        await get_invited_count(self.bot.db_pool, join_event['inviter_id'])
+                        - await get_invited_leaves_count(self.bot.db_pool, join_event['inviter_id'])
                         if inviter else "<not implemented yet>"
                     )
                 )
