@@ -13,7 +13,7 @@ from data.databases.core.roles import (
                             )
 from data.data_visualisations.graph_templates.pie_chart import standard_pie_chart
 
-from utils.embeds import create_embed
+from Cogs.utils.embeds import create_embed
 from datetime import datetime
 
 import os
@@ -205,4 +205,5 @@ class Stats(commands.Cog):
         )
 
 
+async def setup(bot: commands.Bot):
     await bot.add_cog(Stats(bot))

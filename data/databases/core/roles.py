@@ -54,7 +54,7 @@ async def get_server_role_category_id(db_pool, server_id, role_category):
         async with connection.transaction():
             return await connection.fetchval(
                 "SELECT id FROM server_role_categories"
-                " WHERE server_id = $1 AND role_category_name = '$2'",
+                " WHERE server_id = $1 AND role_category_name = $2",
                 server_id, role_category
             )
 
