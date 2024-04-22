@@ -76,6 +76,19 @@ class Admin(commands.Cog):
 
         await ctx.send(f"Synced the tree to {ret}/{len(guilds)}.")
 
+    '''obtain a server's channel name store them in a json file for reference'''
+    @commands.is_owner()
+    @commands.command()
+    async def channel_list(self, ctx: commands.Context, json_output: bool = False):
+        channels = sorted(ctx.guild.channels, key=lambda x: x.position)
+        channel_list = []
+        for channel in channels:
+            channel_list.append(channel.name)
+        if json_output:
+            with open("data/json/channel_list.json", "w") as f:
+                json.dump(channel_list, f)
+        return channel_list
+
     '''obtain a server's role name and id as key value pairs and store them in a json file for reference'''
     @commands.is_owner()
     @commands.command()

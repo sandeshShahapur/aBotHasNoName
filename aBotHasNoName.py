@@ -12,7 +12,8 @@ from data.databases.core.servers import (
                                         get_prefix
                                     )
 from data.databases.core.roles import (
-                                delete_role
+                                delete_role,
+                                delete_role_from_categories
                             )
 from data.databases.core.db_management import (
                                 update_user_roles,
@@ -136,7 +137,7 @@ class aBotHasNoName(commands.Bot):
 
     async def on_guild_role_delete(self, role: discord.Role) -> None:
         await delete_role(aBotHasNoName.db_pool, role.id)
-        # TODO also do for role categories
+        await delete_role_from_categories(aBotHasNoName.db_pool, role.id)
 
     async def close(self) -> None:
         await super().close()

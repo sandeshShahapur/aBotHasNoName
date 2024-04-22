@@ -165,6 +165,15 @@ async def delete_server_role_category_role(db_pool, server_role_category_id, rol
             )
 
 
+async def delete_role_from_categories(db_pool, role_id):
+    async with db_pool.acquire() as connection:
+        async with connection.transaction():
+            await connection.execute(
+                "DELETE FROM server_role_categories_roles"
+                " WHERE role_id = $1",
+                role_id
+            )
+
 '''''''''''''''''''''ROLE STATS'''''''''''''''''''''''
 async def get_role_count(db_pool, role_id):  # noqa
     async with db_pool.acquire() as connection:
